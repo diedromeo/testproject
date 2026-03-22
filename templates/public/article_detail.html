@@ -1,0 +1,52 @@
+{% extends 'public_base.html' %}
+{% block title %}{{ title }} - ThreatShield Research{% endblock %}
+
+{% block extra_css %}
+<style>
+    .article-content p { @apply text-slate-600 dark:text-slate-400 text-lg leading-relaxed mb-8 font-medium; }
+    .article-content h3 { @apply text-2xl font-black text-slate-900 dark:text-white mb-6 mt-12 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400; }
+    .article-content ul { @apply list-disc list-inside mb-8 space-y-3 text-slate-600 dark:text-slate-400 font-medium; }
+    .article-content blockquote { @apply border-l-4 border-indigo-500 pl-8 my-10 italic text-2xl text-slate-500 dark:text-slate-400 font-bold leading-tight; }
+    .article-header { @apply pt-40 pb-20 px-4 text-center border-b border-slate-100 dark:border-white/5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-white dark:bg-slate-950 min-h-screen pb-32">
+    <header class="article-header">
+        <div class="max-w-4xl mx-auto">
+            <div class="inline-flex items-center px-4 py-2 rounded-full bg-indigo-500/10 text-indigo-500 text-[10px] font-black uppercase tracking-widest mb-8 animate-pulse">
+                {{ category }} • Published {{ date }}
+            </div>
+            <h1 class="text-5xl md:text-7xl font-black text-slate-900 dark:text-white mb-8 tracking-tighter leading-none uppercase">
+                {{ title }}
+            </h1>
+            <div class="flex items-center justify-center gap-6 border-t border-slate-100 dark:border-white/5 pt-10 mt-10">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-rose-600 flex items-center justify-center text-white font-black text-sm uppercase shadow-xl shadow-indigo-500/20">TS</div>
+                    <div class="text-left">
+                        <div class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">{{ author }}</div>
+                        <div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">ThreatShield Research Team</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-4xl mx-auto px-4 mt-20">
+        <div class="article-content">
+            {{ content|safe }}
+        </div>
+
+        <!-- Call to Action -->
+        <div class="mt-24 p-12 bg-slate-950 rounded-[3rem] border border-white/5 relative overflow-hidden group">
+            <div class="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="relative z-10 text-center">
+                <h3 class="text-3xl font-black text-white mb-6 uppercase tracking-tighter">Ready to Automate your Compliance?</h3>
+                <p class="text-slate-400 mb-10 max-w-xl mx-auto font-medium">Join 200+ Indian enterprises automating DPDP, SOC 2, and ISO 27001 with ThreatShield OS. Start your certification journey today.</p>
+                <a href="{% url 'core:client_register' %}" class="inline-block px-12 py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-black tracking-widest uppercase text-xs transition-all shadow-2xl shadow-indigo-600/40 rounded-2xl transform hover:scale-105 active:scale-95">Start for Free</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

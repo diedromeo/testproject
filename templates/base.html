@@ -1,0 +1,250 @@
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ThreatShield - Enterprise Compliance & Threat Intelligence Platform">
+    <title>{% block title %}ThreatShield{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    {% block extra_css %}{% endblock %}
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</head>
+<body>
+{% block body %}
+<div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar" style="background:var(--bg-surface); border-right:1px solid var(--border); padding: 12px 16px;">
+        <div class="sidebar-brand" style="border:none; padding:10px 4px 20px; height:auto;">
+            <div class="brand-logo" style="width:24px; height:24px; font-size:12px; border-radius:4px;">TS</div>
+            <span class="brand-name" style="font-size:14px;">ThreatShield</span>
+        </div>
+
+        <div class="search-box" style="margin-bottom: 24px;">
+            <span class="s-icon" style="left:8px; color:var(--text-tertiary);">&#x1F50D;</span>
+            <input type="text" placeholder="Help..." id="globalSearchSidebar" style="width:100%; padding:6px 10px 6px 28px; background:var(--bg-input); border:1px solid var(--border); border-radius:6px; font-size:13px; font-weight:500; color:var(--text-primary);">
+        </div>
+
+        <nav class="sidebar-nav" style="padding:0; margin-left:-8px; margin-right:-8px;">
+            <a href="{% url 'core:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <span class="icon">&#x2714;</span> My work
+            </a>
+            <a href="{% url 'core:roadmap' %}" class="nav-item {% if request.resolver_match.url_name == 'roadmap' %}active{% endif %}">
+                <span class="icon" style="transform:rotate(45deg);">&#x27A4;</span> Roadmap
+            </a>
+            <a href="{% url 'compliance:checklists' %}" class="nav-item {% if request.resolver_match.url_name == 'checklists' %}active{% endif %}">
+                <span class="icon">&#x1F4CB;</span> Compliance Index
+            </a>
+            <a href="{% url 'cve_engine:cve_feed' %}" class="nav-item {% if request.resolver_match.app_name == 'cve_engine' %}active{% endif %}">
+                <span class="icon">&#x2261;</span> Tests
+            </a>
+            <a href="{% url 'advisories:advisory_list' %}" class="nav-item {% if request.resolver_match.app_name == 'advisories' %}active{% endif %}">
+                <span class="icon">&#x1F4CA;</span> Reports
+            </a>
+
+            <div style="height:1px; background:var(--border); margin:12px 10px;"></div>
+
+            <!-- COMPLIANCE NESTED -->
+            <div class="nav-group collapsible {% if request.resolver_match.app_name == 'compliance' or request.resolver_match.app_name == 'documents' %}open{% endif %}">
+                <div class="nav-item toggle-nav" style="justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:10px;"><span class="icon">&#x1F4CB;</span> Compliance</div>
+                    <span class="chevron">&#x276F;</span>
+                </div>
+                <div class="sub-menu">
+                    <a href="{% url 'compliance:framework_list' %}" class="sub-item {% if request.resolver_match.url_name == 'framework_list' %}active{% endif %}">Frameworks</a>
+                    <a href="{% url 'compliance:controls_list' %}" class="sub-item {% if request.resolver_match.url_name == 'controls_list' %}active{% endif %}">Controls</a>
+                    <a href="#" class="sub-item">Policies</a>
+                    <a href="{% url 'documents:document_list' %}" class="sub-item {% if request.resolver_match.app_name == 'documents' %}active{% endif %}">Documents</a>
+                    <a href="{% url 'compliance:audit_list' %}" class="sub-item {% if request.resolver_match.url_name == 'audit_list' %}active{% endif %}">Audits</a>
+                    <a href="#" class="sub-item">Issues</a>
+                    <a href="#" class="sub-item">Settings</a>
+                </div>
+            </div>
+
+            <!-- OTHER ONES -->
+            <div class="nav-group collapsible">
+                <div class="nav-item toggle-nav" style="justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:10px;"><span class="icon">&#x1F6E1;</span> Customer trust</div><span class="chevron">&#x276F;</span>
+                </div>
+                <div class="sub-menu"><a href="#" class="sub-item">Portal</a></div>
+            </div>
+            
+            <div class="nav-group collapsible {% if request.resolver_match.app_name == 'alerts' %}open{% endif %}">
+                <div class="nav-item toggle-nav" style="justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:10px;"><span class="icon">&#x26A0;</span> Risk</div><span class="chevron">&#x276F;</span>
+                </div>
+                <div class="sub-menu"><a href="{% url 'alerts:alert_list' %}" class="sub-item {% if request.resolver_match.app_name == 'alerts' %}active{% endif %}">Alerts</a></div>
+            </div>
+
+            <div class="nav-group collapsible {% if request.resolver_match.app_name == 'vendors' %}open{% endif %}">
+                <div class="nav-item toggle-nav" style="justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:10px;"><span class="icon">&#x1F3E2;</span> Vendors</div><span class="chevron">&#x276F;</span>
+                </div>
+                <div class="sub-menu"><a href="{% url 'vendors:vendor_list' %}" class="sub-item {% if request.resolver_match.app_name == 'vendors' %}active{% endif %}">Vendor Directory</a></div>
+            </div>
+
+            <div class="nav-group collapsible {% if request.resolver_match.app_name == 'darkweb' %}open{% endif %}">
+                <div class="nav-item toggle-nav" style="justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:10px;"><span class="icon">&#x1F512;</span> Privacy</div><span class="chevron">&#x276F;</span>
+                </div>
+                <div class="sub-menu"><a href="{% url 'darkweb:dashboard' %}" class="sub-item {% if request.resolver_match.app_name == 'darkweb' %}active{% endif %}">Dark Web Monitor</a></div>
+            </div>
+            
+            <div class="nav-group collapsible">
+                <div class="nav-item toggle-nav" style="justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:10px;"><span class="icon">&#x2630;</span> Assets</div><span class="chevron">&#x276F;</span>
+                </div>
+            </div>
+
+            <div class="nav-group collapsible">
+                <div class="nav-item toggle-nav" style="justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:10px;"><span class="icon">&#x1F465;</span> Personnel</div><span class="chevron">&#x276F;</span>
+                </div>
+            </div>
+
+            <div style="height:1px; background:var(--border); margin:12px 10px;"></div>
+
+            <div class="nav-group collapsible {% if request.resolver_match.app_name == 'threat_viz' or request.resolver_match.app_name == 'advisories' %}open{% endif %}">
+                <div class="nav-item toggle-nav" style="justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:10px;"><span class="icon">&#x1F310;</span> Threat Intel</div><span class="chevron">&#x276F;</span>
+                </div>
+                <div class="sub-menu">
+                    <a href="{% url 'threat_viz:threat_globe' %}" class="sub-item {% if request.resolver_match.url_name == 'threat_globe' %}active{% endif %}">3D Attack Globe</a>
+                    <a href="{% url 'advisories:advisory_list' %}" class="sub-item {% if request.resolver_match.app_name == 'advisories' %}active{% endif %}">Security Blog</a>
+                    <a href="{% url 'threat_viz:threat_map' %}" class="sub-item {% if request.resolver_match.url_name == 'threat_map' %}active{% endif %}">World Map</a>
+                </div>
+            </div>
+
+            <div style="height:1px; background:var(--border); margin:12px 10px;"></div>
+
+            <a href="{% url 'core:integrations' %}" class="nav-item {% if request.resolver_match.url_name == 'integrations' %}active{% endif %}" style="justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:10px;"><span class="icon">&#x260C;</span> Integrations (CI/CD)</div>
+            </a>
+
+            <div style="height:1px; background:var(--border); margin:12px 10px;"></div>
+
+            {% if request.user.profile.is_auditor or request.user.profile.is_admin %}
+            <a href="{% url 'compliance:auditor_dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'auditor_dashboard' %}active{% endif %}">
+                <span class="icon">&#x1F464;</span> My security tasks
+            </a>
+            {% endif %}
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'core:logout' %}" class="sidebar-user" style="text-decoration:none;color:inherit;">
+                <div class="user-avatar-sm">{{ request.user.username|first|upper }}</div>
+                <div class="user-meta">
+                    <div class="u-name">{{ request.user.username }}</div>
+                    <div class="u-role">
+                        {% if user_role == 'super_admin' %}Super Admin
+                        {% elif user_role == 'client_admin' %}Client Admin
+                        {% elif user_role == 'compliance_manager' %}Compliance Mgr
+                        {% elif user_role == 'auditor' %}Auditor
+                        {% elif user_role == 'vendor_user' %}Vendor
+                        {% else %}{{ user_role|title }}{% endif %}
+                    </div>
+                </div>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+        <header class="top-bar">
+            <div class="top-bar-left">
+                <button class="tb-btn" style="display:none;" id="menuToggle" onclick="document.getElementById('sidebar').classList.toggle('show')">&#9776;</button>
+                <h2 style="font-size:16px; font-weight:600; color:var(--text-primary); margin:0;">{% block page_title_header %}{% endblock %}</h2>
+            </div>
+            <div class="top-bar-right">
+                <span class="live-badge">LIVE</span>
+                <button class="tb-btn" title="Toggle Theme" onclick="toggleTheme()" id="themeToggle">&#x263D;</button>
+                <button class="tb-btn" title="Refresh data" onclick="fetchCVEsNow()">&#x21BB;</button>
+                <a href="{% url 'alerts:alert_list' %}" class="tb-btn" title="Alerts">
+                    &#x1F514;
+                    {% if unresolved_alerts_count %}<span class="dot"></span>{% endif %}
+                </a>
+                <a href="{% url 'core:logout' %}" class="tb-btn" title="Sign out">&#x2192;</a>
+            </div>
+        </header>
+
+        <div class="page">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</div>
+
+<div id="toastBox" class="toast-box"></div>
+{% endblock %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% block extra_js %}{% endblock %}
+
+<script>
+function showToast(msg, type) {
+    const box = document.getElementById('toastBox');
+    if (!box) return;
+    const t = document.createElement('div');
+    t.className = 'toast ' + (type||'nfo');
+    t.textContent = msg;
+    box.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+}
+
+function fetchCVEsNow() {
+    showToast('Fetching latest CVEs...', 'nfo');
+    fetch('{% url "cve_engine:fetch_cves_now" %}', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
+    })
+    .then(r => r.json())
+    .then(d => { showToast(d.message || 'Done', 'ok'); setTimeout(() => location.reload(), 1200); })
+    .catch(() => showToast('Error', 'err'));
+}
+
+function getCookie(n) {
+    let v = null;
+    document.cookie.split(';').forEach(c => {
+        c = c.trim();
+        if (c.startsWith(n + '=')) v = decodeURIComponent(c.substring(n.length + 1));
+    });
+    return v;
+}
+
+setInterval(() => {
+    fetch('{% url "core:dashboard_stats_api" %}').then(r=>r.json()).then(d => {
+        for (const [id, val] of Object.entries(d)) {
+            const el = document.getElementById('s-' + id);
+            if (el) el.textContent = val;
+        }
+    }).catch(() => {});
+}, 30000);
+
+function toggleTheme() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    document.getElementById('themeToggle').innerHTML = isDark ? '&#x2600;' : '&#x263D;';
+}
+window.addEventListener('DOMContentLoaded', () => {
+    if (document.documentElement.classList.contains('dark')) {
+        document.getElementById('themeToggle').innerHTML = '&#x2600;';
+    }
+
+    // Toggle logic for sidebar collapsibles
+    document.querySelectorAll('.toggle-nav').forEach(el => {
+        el.addEventListener('click', (e) => {
+            e.preventDefault();
+            const group = el.closest('.nav-group');
+            group.classList.toggle('open');
+        });
+    });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - ThreatShield AI</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="auth-page">
+        <div class="auth-card">
+            <div class="logo">
+                <div class="logo-icon">🛡️</div>
+                <h1>ThreatShield AI</h1>
+                <p>Create your account</p>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                {% if form.errors %}
+                <ul class="errorlist">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                <input type="text" name="username" placeholder="Username" value="{{ form.username.value|default:'' }}" required autofocus>
+                <input type="password" name="password1" placeholder="Password" required>
+                <input type="password" name="password2" placeholder="Confirm Password" required>
+                <button type="submit" class="btn btn-primary">🚀 Create Account</button>
+            </form>
+
+            <div class="auth-link">
+                Already have an account? <a href="{% url 'core:login' %}">Sign in here</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

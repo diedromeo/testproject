@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Upload Document - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Upload Document</h1><p>Submit evidence, policies, or SOPs against compliance controls</p></div>
+    <a href="{% url 'documents:document_list' %}" class="btn btn-ghost btn-sm">&larr; Back to List</a>
+</div>
+
+<div class="card" style="max-width:600px;">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">Document Title</label>
+                <input type="text" name="title" class="form-input" placeholder="e.g. Q3 2026 Access Review" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Type</label>
+                <select name="document_type" id="docTypeSelect" class="form-select" required>
+                    <option value="">Select type...</option>
+                    <option value="policy">Policy Document</option>
+                    <option value="sop">Standard Operating Procedure (SOP)</option>
+                    <option value="evidence">Audit Evidence</option>
+                    <option value="checklist">Compliance Checklist</option>
+                    <option value="report">Audit Report</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="display:flex; flex-direction:column; gap:8px;">
+                <label class="form-label">File</label>
+                <input type="file" name="file" class="form-input" style="padding:10px;" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Map to Controls (Multiple allowed)</label>
+                <select name="controls" class="form-select" style="height:150px;" multiple>
+                    {% for c in controls %}
+                    <option value="{{ c.id }}">{{ c.framework.name }} - {{ c.control_id }}: {{ c.title|truncatechars:50 }}</option>
+                    {% endfor %}
+                </select>
+                <p style="font-size:11px; margin-top:6px; color:var(--text-tertiary);">Hold Ctrl/Cmd to select multiple controls</p>
+            </div>
+
+            <div style="margin-top:20px;display:flex;gap:10px;">
+                <button type="submit" class="btn btn-primary">Upload</button>
+                <a href="{% url 'documents:document_list' %}" class="btn btn-ghost">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const req = params.get('req');
+    const type = params.get('type');
+    
+    if (req) {
+        document.querySelector('input[name="title"]').value = req;
+    }
+    
+    const select = document.getElementById('docTypeSelect');
+    if (select && type) {
+        const lowerType = type.toLowerCase();
+        const options = Array.from(select.options).map(o => o.value);
+        if (options.includes(lowerType)) {
+            select.value = lowerType;
+        } else {
+            select.value = 'evidence'; // Default for framework names
+        }
+    }
+});
+</script>
+{% endblock %}

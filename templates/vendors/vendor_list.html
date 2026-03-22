@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Vendors - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Vendor Risk Management</h1><p>Third-party risk scoring and tech stack monitoring</p></div></div>
+
+<div class="stats-row" style="grid-template-columns:repeat(2,1fr);">
+    <div class="stat-card"><div class="sc-label">Total Vendors</div><div class="sc-value">{{ total_vendors }}</div></div>
+    <div class="stat-card"><div class="sc-label" style="color:var(--danger);">High Risk</div><div class="sc-value">{{ high_risk }}</div></div>
+</div>
+
+<div class="grid-3">
+    {% for v in vendors %}
+    <a href="{% url 'vendors:vendor_detail' v.pk %}" class="v-card">
+        <div class="v-name">{{ v.name }}</div>
+        <div class="v-cat">{{ v.category }} &middot; {{ v.country }}</div>
+        <div class="v-score" style="color:{{ v.risk_color }};">{{ v.risk_score|floatformat:1 }}<span style="font-size:12px;color:var(--text-tertiary);">/10</span></div>
+        <span class="badge badge-{{ v.risk_level }}">{{ v.get_risk_level_display }}</span>
+        <div class="v-tags">
+            {% for t in v.tech_stack %}<span class="tag">{{ t }}</span>{% endfor %}
+        </div>
+    </a>
+    {% empty %}
+    <div class="empty-state" style="grid-column:span 3;"><p>No vendors. Run seed_data.</p></div>
+    {% endfor %}
+</div>
+{% endblock %}

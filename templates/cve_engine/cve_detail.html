@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}{{ cve.cve_id }} - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>{{ cve.cve_id }}</h1><p>Vulnerability Analysis & Compliance Mapping</p></div></div>
+
+<div class="detail-header">
+    <div>
+        <div class="detail-title">{{ cve.cve_id }} &mdash; {{ cve.product|default:"System Component" }}</div>
+        <div class="detail-meta">
+            <span class="detail-meta-item"><span class="badge badge-{{ cve.severity_level|lower }}">{{ cve.severity_level }} ({{ cve.severity_score }}/10)</span></span>
+            <span class="detail-meta-item">Vendor: {{ cve.vendor|default:"Unknown" }}</span>
+            <span class="detail-meta-item">Product: {{ cve.product|default:"N/A" }}</span>
+            <span class="detail-meta-item">Vector: {{ cve.attack_vector }}</span>
+            <span class="detail-meta-item">Country: {{ cve.country|default:"N/A" }}</span>
+            <span class="detail-meta-item">Published: {{ cve.published_date|timesince }} ago</span>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-head"><h3>Description</h3></div>
+        <div class="card-body"><div class="detail-text">{{ cve.description }}</div></div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h3>Compliance Control Mappings</h3></div>
+        <div class="card-body">
+            {% for m in mappings %}
+            <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+                <div style="font-size:13px;font-weight:600;color:var(--text-primary);">{{ m.control_name }}</div>
+                <div style="font-size:11px;color:var(--brand-secondary);margin:2px 0;">{{ m.framework }}</div>
+                <div style="font-size:12px;color:var(--text-secondary);">{{ m.risk_description }}</div>
+                {% if m.mitigation %}<div style="font-size:11px;color:var(--success);margin-top:3px;">Mitigation: {{ m.mitigation }}</div>{% endif %}
+            </div>
+            {% empty %}
+            <div class="empty-state" style="padding:16px;"><p>No control mappings</p></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-head"><h3>Related Advisories</h3></div>
+        <div class="card-body no-pad">
+            {% for adv in advisories %}
+            <a href="{% url 'advisories:advisory_detail' adv.pk %}" class="cve-row">
+                <div class="cve-severity-dot {{ adv.severity }}"></div>
+                <div class="cve-info">
+                    <div style="font-size:13px;font-weight:500;">{{ adv.title|truncatewords:10 }}</div>
+                    <div class="cve-meta"><span>{{ adv.source }}</span><span>{{ adv.created_at|timesince }} ago</span></div>
+                </div>
+            </a>
+            {% empty %}<div class="empty-state" style="padding:16px;"><p>No advisories</p></div>{% endfor %}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h3>Related Alerts</h3></div>
+        <div class="card-body no-pad">
+            {% for alert in alerts %}
+            <a href="{% url 'alerts:alert_detail' alert.pk %}" class="cve-row">
+                <div class="cve-severity-dot {{ alert.severity }}"></div>
+                <div class="cve-info">
+                    <div style="font-size:13px;font-weight:500;">{{ alert.title|truncatewords:8 }}</div>
+                    <div class="cve-meta"><span>{{ alert.created_at|timesince }} ago</span></div>
+                </div>
+                <span class="badge badge-{{ alert.status }}">{{ alert.status }}</span>
+            </a>
+            {% empty %}<div class="empty-state" style="padding:16px;"><p>No alerts</p></div>{% endfor %}
+        </div>
+    </div>
+</div>
+
+<div style="margin-top:12px;display:flex;gap:8px;">
+    <a href="{% url 'cve_engine:cve_feed' %}" class="btn btn-ghost btn-sm">&larr; Back to Feed</a>
+    <a href="{% url 'ai_assistant:chat' %}" class="btn btn-primary btn-sm">Analyze with AI</a>
+</div>
+{% endblock %}

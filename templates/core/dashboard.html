@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Dashboard - ThreatShield{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Security Overview</h1>
+        <p>Real-time compliance & threat intelligence monitoring</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+        {% if not request.user.profile.is_auditor %}
+        <button class="btn btn-ghost btn-sm" onclick="fetchCVEsNow()">&#x21BB; Sync CVEs</button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="sc-label">Total CVEs</div>
+        <div class="sc-value" id="s-total_cves">{{ total_cves }}</div>
+        <div class="sc-sub up">+{{ recent_cves }} in 24h</div>
+    </div>
+    <div class="stat-card">
+        <div class="sc-label" style="color:var(--severity-critical);">&#x25CF; Critical</div>
+        <div class="sc-value" id="s-critical_cves">{{ critical_cves }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="sc-label" style="color:var(--danger);">Open Alerts</div>
+        <div class="sc-value" id="s-open_alerts">{{ open_alerts }}</div>
+        {% if critical_alerts %}<div class="sc-sub down">{{ critical_alerts }} critical</div>{% endif %}
+    </div>
+    <div class="stat-card">
+        <div class="sc-label">Advisories</div>
+        <div class="sc-value">{{ active_advisories }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="sc-label">Vendors</div>
+        <div class="sc-value">{{ total_vendors }}</div>
+        {% if high_risk_vendors %}<div class="sc-sub down">{{ high_risk_vendors }} high risk</div>{% endif %}
+    </div>
+    <div class="stat-card">
+        <div class="sc-label" style="color:var(--danger);">Dark Web Alerts</div>
+        <div class="sc-value" id="s-darkweb_new">{{ darkweb_alerts }}</div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="grid-2">
+    <div class="card">
+        <div class="card-head"><h3>CVE Severity Distribution</h3></div>
+        <div class="card-body">
+            <div class="chart-area"><canvas id="severityChart"></canvas></div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-head"><h3>Compliance Framework Status</h3></div>
+        <div class="card-body" style="padding:12px;">
+            {% for fw in frameworks %}
+            <div style="margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                    <span style="font-size:12px;font-weight:600;color:var(--text-primary);">{{ fw.name }}</span>
+                    <span style="font-size:12px;font-weight:600;color:{% if fw.compliance_percentage >= 70 %}var(--success){% elif fw.compliance_percentage >= 40 %}var(--warning){% else %}var(--danger){% endif %};">{{ fw.compliance_percentage }}%</span>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar {% if fw.compliance_percentage >= 70 %}green{% elif fw.compliance_percentage >= 40 %}yellow{% else %}red{% endif %}" style="width:{{ fw.compliance_percentage }}%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- CVEs & Alerts -->
+<div class="grid-2">
+    <div class="card">
+        <div class="card-head">
+            <h3>Latest CVEs</h3>
+            <a href="{% url 'cve_engine:cve_feed' %}" class="btn btn-ghost btn-xs">View all &rarr;</a>
+        </div>
+        <div class="card-body no-pad">
+            {% for cve in latest_cves %}
+            <a href="{% url 'cve_engine:cve_detail' cve.cve_id %}" class="cve-row">
+                <div class="cve-severity-dot {{ cve.severity_level|lower }}"></div>
+                <div class="cve-info">
+                    <div class="cve-id">{{ cve.cve_id }}</div>
+                    <div class="cve-desc">{{ cve.description|truncatewords:18 }}</div>
+                    <div class="cve-meta">
+                        <span>{{ cve.vendor|default:"Unknown" }}</span>
+                        <span>{{ cve.published_date|timesince }} ago</span>
+                    </div>
+                </div>
+                <span class="cve-score badge-{{ cve.severity_level|lower }}">{{ cve.severity_score }}</span>
+            </a>
+            {% empty %}
+            <div class="empty-state">
+                <div class="e-icon">&#x26A0;</div>
+                <h3>No CVEs yet</h3>
+                <p>Click Sync CVEs to fetch vulnerability data</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-head">
+            <h3>Active Alerts</h3>
+            <a href="{% url 'alerts:alert_list' %}" class="btn btn-ghost btn-xs">View all &rarr;</a>
+        </div>
+        <div class="card-body no-pad">
+            {% for alert in latest_alerts %}
+            <a href="{% url 'alerts:alert_detail' alert.pk %}" class="cve-row">
+                <div class="cve-severity-dot {{ alert.severity }}"></div>
+                <div class="cve-info">
+                    <div style="font-size:13px;font-weight:500;color:var(--text-primary);">{{ alert.title|truncatewords:10 }}</div>
+                    <div class="cve-meta">
+                        <span>{{ alert.get_alert_type_display }}</span>
+                        <span>{{ alert.created_at|timesince }} ago</span>
+                    </div>
+                </div>
+                <span class="badge badge-{{ alert.status }}">{{ alert.status }}</span>
+            </a>
+            {% empty %}
+            <div class="empty-state"><p>No active alerts</p></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Dark Web & Activity -->
+<div class="grid-2">
+    <div class="card">
+        <div class="card-head">
+            <h3>Dark Web Findings</h3>
+            <a href="{% url 'darkweb:dashboard' %}" class="btn btn-ghost btn-xs">View all &rarr;</a>
+        </div>
+        <div class="card-body no-pad">
+            {% for dw in latest_darkweb %}
+            <div class="dw-alert-row">
+                <div class="dw-sev" style="background:{{ dw.severity_color }};"></div>
+                <div class="dw-content">
+                    <div class="dw-title">{{ dw.title|truncatewords:12 }}</div>
+                    <div class="dw-meta">
+                        <span class="badge badge-{{ dw.severity }}">{{ dw.severity|upper }}</span>
+                        <span>{{ dw.source }}</span>
+                        <span>{{ dw.discovered_at|timesince }} ago</span>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state" style="padding:20px;"><p>No dark web findings. Run a scan to check.</p></div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-head"><h3>Recent Activity</h3></div>
+        <div class="card-body">
+            {% for activity in latest_activities %}
+            <div class="activity-row">
+                <div class="a-icon" style="background:rgba(99,102,241,0.08);color:var(--brand-secondary);">
+                    {% if activity.action_type == 'cve_fetch' %}&#x26A0;{% elif activity.action_type == 'alert_triggered' %}&#x25CF;{% elif activity.action_type == 'user_action' %}&#x2192;{% else %}&#x2709;{% endif %}
+                </div>
+                <div>
+                    <div class="a-text">{{ activity.description|truncatewords:12 }}</div>
+                    <div class="a-time">{{ activity.created_at|timesince }} ago</div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state" style="padding:20px;"><p>No recent activity</p></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const distData = {{ severity_dist|safe }};
+    const chartCtx = document.getElementById('severityChart');
+    
+    if (chartCtx && distData && distData.length > 0) {
+        const severityColors = { 
+            'CRITICAL': '#DC2626', 
+            'HIGH': '#EA580C', 
+            'MEDIUM': '#D97706', 
+            'LOW': '#16A34A' 
+        };
+        
+        new Chart(chartCtx, {
+            type: 'doughnut',
+            data: {
+                labels: distData.map(d => d.severity_level),
+                datasets: [{ 
+                    data: distData.map(d => d.count), 
+                    backgroundColor: distData.map(d => severityColors[d.severity_level] || '#6B7280'), 
+                    borderWidth: 0, 
+                    hoverOffset: 6 
+                }]
+            },
+            options: {
+                responsive: true, 
+                maintainAspectRatio: false, 
+                cutout: '68%',
+                plugins: { 
+                    legend: { 
+                        position: 'bottom', 
+                        labels: { 
+                            color: '#9CA3AF', 
+                            padding: 16, 
+                            font: { family: 'Inter', size: 11 } 
+                        } 
+                    } 
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

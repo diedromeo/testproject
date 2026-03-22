@@ -1,0 +1,132 @@
+{% extends 'public_base.html' %}
+{% block title %}Blog & Research - ThreatShield OS{% endblock %}
+
+{% block content %}
+<div class="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24">
+    <!-- Premium Blog Header -->
+    <header class="pt-32 pb-20 px-4 text-center border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-5xl md:text-7xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">
+                Security <span class="text-indigo-600 dark:text-indigo-400">Research & Insights</span>
+            </h1>
+            <p class="text-xl text-slate-600 dark:text-slate-400 font-medium max-w-2xl mx-auto">
+                Deep dives into zero-trust architectures, modern compliance patterns, and advanced threat intelligence engineered by the ThreatShield Red Team.
+            </p>
+        </div>
+    </header>
+
+    <!-- Blog Layout Container -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
+            
+            <!-- Main Content Area -->
+            <div class="lg:col-span-8 flex flex-col gap-16">
+                
+                <!-- Article 1 Component -->
+                <article class="group relative">
+                    <div class="mb-4 flex items-center gap-4 text-sm font-mono font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+                        <span>Research</span>
+                        <span class="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+                        <span>12 Min Read</span>
+                    </div>
+                    <a href="{% url 'core:article_detail' slug='perimeter-security-2026' %}" class="block">
+                        <h2 class="text-4xl font-bold text-slate-900 dark:text-white mb-4 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">The Disintegration of Perimeter Security in 2026</h2>
+                        <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed mb-6 font-medium">
+                            With VPNs continuously compromised by 0-days (CVE-2025-1022), traditional perimeters are obsolete. We analyze how organizations must pivot to dynamic authorization models and zero-trust identity architectures to survive state-sponsored APTs.
+                        </p>
+                    </a>
+                    <div class="flex items-center gap-4 border-t border-slate-200 dark:border-slate-800 pt-6">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-emerald-500 flex items-center justify-center text-white font-bold text-xs uppercase">RA</div>
+                        <div class="text-sm font-semibold text-slate-800 dark:text-slate-200">By Rahul, Head of Threat Intel</div>
+                    </div>
+                </article>
+
+                <!-- Article 2 Component -->
+                <article class="group relative">
+                    <div class="mb-4 flex items-center gap-4 text-sm font-mono font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
+                        <span>Compliance Blueprint</span>
+                        <span class="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+                        <span>8 Min Read</span>
+                    </div>
+                    <a href="{% url 'core:article_detail' slug='rbi-cyber-framework' %}" class="block">
+                        <h2 class="text-4xl font-bold text-slate-900 dark:text-white mb-4 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Automating RBI Cyber Security IT Framework </h2>
+                        <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed mb-6 font-medium">
+                            The Reserve Bank of India has tightened its grip on InfoSec requirements. Read our definitive guide on mapping SOC 2 controls dynamically to RBI Baseline parameters to avoid massive penalties during Payment Aggregator audits.
+                        </p>
+                    </a>
+                    <div class="flex items-center gap-4 border-t border-slate-200 dark:border-slate-800 pt-6">
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold text-xs uppercase">SA</div>
+                        <div class="text-sm font-semibold text-slate-800 dark:text-slate-200">By Sarah, Compliance Architect</div>
+                    </div>
+                </article>
+
+                <!-- Article 3 Component: DPDP ACT -->
+                <article class="group relative">
+                    <div class="mb-4 flex items-center gap-4 text-sm font-mono font-bold uppercase tracking-widest text-rose-600 dark:text-rose-400">
+                        <span>Regulatory Analysis</span>
+                        <span class="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+                        <span>10 Min Read</span>
+                    </div>
+                    <a href="{% url 'core:article_detail' slug='dpdp-act-2023' %}" class="block">
+                        <h2 class="text-4xl font-bold text-slate-900 dark:text-white mb-4 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">Decoding the Digital Personal Data Protection (DPDP) Act 2023</h2>
+                        <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed mb-6 font-medium">
+                            India's first dedicated data privacy law is here. We break down the roles of 'Data Fiduciaries' and 'Data Principals', and explain how ThreatShield automates the consent management lifecycle required under Section 6 of the Act.
+                        </p>
+                    </a>
+                    <div class="flex items-center gap-4 border-t border-slate-200 dark:border-slate-800 pt-6">
+                        <div class="w-10 h-10 rounded-full bg-rose-800 flex items-center justify-center text-white font-bold text-xs uppercase">DP</div>
+                        <div class="text-sm font-semibold text-slate-800 dark:text-slate-200">By Deepika, Legal Strategy</div>
+                    </div>
+                </article>
+
+                <!-- Article 4 Component -->
+                <article class="group relative">
+                    <div class="mb-4 flex items-center gap-4 text-sm font-mono font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                        <span>Engineering</span>
+                        <span class="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+                        <span>15 Min Read</span>
+                    </div>
+                    <a href="{% url 'core:article_detail' slug='darkweb-engine-v3' %}" class="block">
+                        <h2 class="text-4xl font-bold text-slate-900 dark:text-white mb-4 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Building a High-Throughput Darkweb Map Engine v3</h2>
+                        <p class="text-lg text-slate-600 dark:text-slate-400 leading-relaxed mb-6 font-medium">
+                            An inside look at our tech stack: How we evolved our Threat Engine using Celery, Redis, and highly concurrent scrapers to track breached credentials in real-time.
+                        </p>
+                    </a>
+                    <div class="flex items-center gap-4 border-t border-slate-200 dark:border-slate-800 pt-6">
+                        <div class="w-10 h-10 rounded-full bg-indigo-800 flex items-center justify-center text-white font-bold text-xs uppercase">EG</div>
+                        <div class="text-sm font-semibold text-slate-800 dark:text-slate-200">By Engineering Team</div>
+                    </div>
+                </article>
+
+            </div>
+
+            <!-- Sticky Sidebar -->
+            <aside class="lg:col-span-4">
+                <div class="sticky top-28 flex flex-col gap-8">
+                    
+                    <!-- Toolkit Download -->
+                    <div class="bg-indigo-600 rounded-2xl p-8 text-white shadow-xl shadow-indigo-600/20 transform hover:-translate-y-1 transition-all">
+                        <h3 class="text-2xl font-bold mb-4">Ultimate SOC 2 Prep Guide </h3>
+                        <p class="text-indigo-100 mb-6 font-medium">Download our 40-page checklist including MDM policies, AWS architecture scripts, and developer offboarding workflows.</p>
+                        <a href="{% url 'core:client_register' %}" class="block w-full text-center bg-white text-indigo-700 font-bold py-3 px-4 rounded-xl hover:bg-slate-100 transition-colors">Download PDF</a>
+                    </div>
+                    
+                    <!-- Popular Tags -->
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6 uppercase tracking-wider text-xs">Explore Topics</h3>
+                        <div class="flex flex-wrap gap-3">
+                            <span class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-mono text-sm cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors">#SOC2</span>
+                            <span class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-mono text-sm cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors">#ISO27001</span>
+                            <span class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-mono text-sm cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors">#ZeroTrust</span>
+                            <span class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-mono text-sm cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors">#DarkWeb</span>
+                            <span class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-mono text-sm cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900 transition-colors">#CloudSec</span>
+                        </div>
+                    </div>
+                    
+                </div>
+            </aside>
+            
+        </div>
+    </section>
+</div>
+{% endblock %}

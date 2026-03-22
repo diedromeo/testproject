@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Threat Map - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Global Threat Map</h1><p>CVE locations visualized by severity</p></div>
+    <span class="live-badge">LIVE</span>
+</div>
+
+<div class="map-wrap"><div id="threatMap"></div></div>
+
+<div style="margin-top:10px;display:flex;gap:10px;">
+    <span class="badge badge-critical">Critical</span>
+    <span class="badge badge-high">High</span>
+    <span class="badge badge-medium">Medium</span>
+    <span class="badge badge-low">Low</span>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const map = L.map('threatMap', { zoomControl: true }).setView([20, 0], 2);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OSM &copy; CARTO',
+    subdomains: 'abcd', maxZoom: 19
+}).addTo(map);
+
+fetch('{% url "threat_viz:geo_data_api" %}')
+    .then(r => r.json())
+    .then(data => {
+        data.markers.forEach(m => {
+            L.circleMarker([m.lat, m.lng], {
+                radius: Math.max(5, m.score * 1.8),
+                fillColor: m.severity_color,
+                color: m.severity_color,
+                weight: 1.5,
+                opacity: 0.8,
+                fillOpacity: 0.35,
+            }).addTo(map).bindPopup(
+                '<div style="font-family:Inter,sans-serif;min-width:180px;">' +
+                '<strong style="color:' + m.severity_color + ';">' + m.cve_id + '</strong>' +
+                '<div style="font-size:12px;margin:4px 0;color:#333;">' + m.description.substring(0,80) + '...</div>' +
+                '<div style="font-size:11px;"><span style="background:' + m.severity_color + '20;color:' + m.severity_color + ';padding:1px 6px;border-radius:3px;font-weight:600;">' + m.severity + ' (' + m.score + ')</span></div>' +
+                '</div>'
+            );
+        });
+    });
+</script>
+{% endblock %}

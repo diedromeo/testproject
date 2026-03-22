@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Auditor Portal - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Auditor Console</h1><p>Review controls, evidence securely, and provide validation</p></div>
+</div>
+
+<div class="grid-2">
+    <!-- Pending Documents Review -->
+    <div class="card">
+        <div class="card-head"><h3>Evidence Pending Review</h3></div>
+        <div class="card-body no-pad">
+            <div class="tbl-wrap">
+                <table class="tbl">
+                    <thead><tr><th>Document</th><th>Org</th><th>Controls</th><th>Action</th></tr></thead>
+                    <tbody>
+                        {% for doc in documents %}
+                        <tr>
+                            <td><strong>{{ doc.title }}</strong><br><span style="font-size:11px;color:var(--text-tertiary);">{{ doc.get_document_type_display }}</span></td>
+                            <td>{{ doc.uploaded_by.profile.organization }}</td>
+                            <td>{% for c in doc.controls.all %}<span class="badge" style="font-size:10px;">{{ c.control_id }}</span>{% endfor %}</td>
+                            <td>
+                                <button class="btn btn-success btn-xs">Approve</button>
+                                <button class="btn btn-ghost btn-xs" style="color:var(--danger);">Reject</button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4"><div class="empty-state" style="padding:20px;">No pending evidence.</div></td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unassessed Controls -->
+    <div class="card">
+        <div class="card-head"><h3>Controls Awaiting Assessment</h3></div>
+        <div class="card-body no-pad">
+            <div class="tbl-wrap">
+                <table class="tbl">
+                    <thead><tr><th>Control</th><th>Framework</th><th>Compliance Body</th><th>Action</th></tr></thead>
+                    <tbody>
+                        {% for c in controls %}
+                        <tr>
+                            <td><strong><span class="mono">{{ c.control_id }}</span></strong><br><span style="font-size:11px;color:var(--text-tertiary);max-width:200px;display:block;truncate:ellipsis;">{{ c.title|truncatechars:40 }}</span></td>
+                            <td>{{ c.framework.name }}</td>
+                            <td>{{ c.compliance_body|default:"N/A" }}</td>
+                            <td><button class="btn btn-primary btn-xs">Audit</button></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4"><div class="empty-state" style="padding:20px;">All controls have been assessed.</div></td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

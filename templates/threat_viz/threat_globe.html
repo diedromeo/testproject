@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% block title %}3D Threat Visualization - ThreatShield{% endblock %}
+{% block page_title_header %}Cyber Warfare Live Map{% endblock %}
+
+{% block extra_css %}
+<style>
+    .globe-main-container {
+        position: relative;
+        height: calc(100vh - 120px);
+        width: 100%;
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #1e293b;
+    }
+
+    #threatGlobeContainer { width: 100%; height: 100%; }
+
+    .threat-overlay {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        width: 320px;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 20px;
+        color: #f8fafc;
+        z-index: 100;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .attack-log {
+        height: 150px;
+        overflow-y: auto;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        margin-top: 15px;
+        border-top: 1px solid #334155;
+        padding-top: 10px;
+        scrollbar-width: none;
+    }
+    .attack-log::-webkit-scrollbar { display: none; }
+    
+    .log-entry { margin-bottom: 6px; display: flex; gap: 8px; align-items: flex-start; }
+    .log-entry .time { color: #64748b; }
+    .log-entry .origin { color: #38bdf8; font-weight: 700; }
+    .log-entry .arrow { color: #94a3b8; }
+    .log-entry .target { color: #ef4444; font-weight: 700; }
+
+    .globe-legend-new {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(15, 23, 42, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 12px 18px;
+        z-index: 100;
+    }
+
+    .pulse {
+        display: inline-block;
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: #ef4444;
+        box-shadow: 0 0 0 #ef4444;
+        animation: pulse 2s infinite;
+        margin-right: 8px;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="globe-main-container">
+    <div id="threatGlobeContainer"></div>
+
+    <div class="threat-overlay">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h4 style="margin:0; font-size:14px; color:#38bdf8; text-transform:uppercase; letter-spacing:1px;">Global Intelligence</h4>
+            <span class="live-badge" style="background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.2);">ACTIVE</span>
+        </div>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+            <div style="background:rgba(2,6,23,0.5); padding:10px; border-radius:6px; border:1px solid #1e293b;">
+                <div style="font-size:10px; color:#94a3b8; text-transform:uppercase;">Engagements</div>
+                <div style="font-size:24px; font-weight:700; color:#fff;" id="arcs-count">0</div>
+            </div>
+            <div style="background:rgba(2,6,23,0.5); padding:10px; border-radius:6px; border:1px solid #1e293b;">
+                <div style="font-size:10px; color:#94a3b8; text-transform:uppercase;">Entry Points</div>
+                <div style="font-size:24px; font-weight:700; color:#fff;" id="points-count">0</div>
+            </div>
+        </div>
+
+        <div style="font-size:11px; font-weight:700; color:#38bdf8; margin-top:10px;">LIVE_ACTIVITY_LOG</div>
+        <div class="attack-log" id="attackLog"></div>
+    </div>
+
+    <div class="globe-legend-new">
+        <div style="font-size:12px; font-weight:700; color:#fff; border-bottom:1px solid #1e293b; padding-bottom:8px; margin-bottom:8px;">THREAT_SPECTRUM</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#ef4444;"></div> CRITICAL_BREACH</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#f97316;"></div> HIGH_RISK</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#eab308;"></div> MEDIUM_ALERT</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#22c55e;"></div> LOW_EXPOSURE</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/globe.gl@2.27.0/dist/globe.gl.min.js"></script>
+<script>
+    const el = document.getElementById('threatGlobeContainer');
+    const container = el.parentElement;
+    
+    const globe = Globe()
+        .width(container.clientWidth)
+        .height(container.clientHeight)
+        .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
+        .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
+        .backgroundImageUrl('https://unpkg.com/three-globe/example/img/night-sky.png')
+        .atmosphereColor('#38bdf8')
+        .atmosphereAltitude(0.2)
+        
+        // Rings for pulse effect
+        .ringsData([])
+        .ringColor(d => d.color)
+        .ringMaxRadius(3)
+        .ringPropagationSpeed(2)
+        .ringRepeatPeriod(2000)
+        
+        // Bars/Points
+        .pointsData([])
+        .pointLat('lat')
+        .pointLng('lng')
+        .pointColor('color')
+        .pointAltitude(d => d.size * 1.5)
+        .pointRadius(0.6)
+        .pointLabel(d => `<div style="padding:10px; background:#0f172a; border:1px solid ${d.color}; border-radius:6px; color:#fff; font-size:12px;"><strong>${d.label}</strong><br>${d.country}</div>`)
+        
+        // Arcs for live flows
+        .arcsData([])
+        .arcStartLat('startLat')
+        .arcStartLng('startLng')
+        .arcEndLat('endLat')
+        .arcEndLng('endLng')
+        .arcColor('color')
+        .arcDashLength(0.5)
+        .arcDashGap(0.1)
+        .arcDashAnimateTime(() => Math.random() * 2000 + 1000)
+        .arcStroke(0.6)
+        .arcAltitudeAutoScale(0.5)
+        (el);
+
+    globe.pointOfView({ lat: 20, lng: 75, altitude: 2.2 }, 1000);
+    globe.controls().autoRotate = true;
+    globe.controls().autoRotateSpeed = 0.5;
+
+    function upgradeGlobe() {
+        fetch('{% url "threat_viz:globe_data_api" %}')
+            .then(r => r.json())
+            .then(data => {
+                globe.pointsData(data.points);
+                globe.arcsData(data.arcs);
+                globe.ringsData(data.points.slice(0, 10)); // Top high-risk points pulse
+
+                document.getElementById('arcs-count').textContent = data.arcs.length;
+                document.getElementById('points-count').textContent = data.points.length;
+                
+                populateLog(data.arcs);
+            });
+    }
+
+    function populateLog(arcs) {
+        const log = document.getElementById('attackLog');
+        log.innerHTML = '';
+        arcs.slice(0, 20).forEach(arc => {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const timestamp = new Date().toLocaleTimeString([], { hour12: false });
+            const [origin, target] = arc.label.split(' → ');
+            entry.innerHTML = `
+                <span class="time">${timestamp}</span>
+                <span class="origin">${origin}</span>
+                <span class="arrow">→</span>
+                <span class="target">${target}</span>
+            `;
+            log.appendChild(entry);
+        });
+        log.scrollTop = 0;
+    }
+
+    upgradeGlobe();
+    setInterval(upgradeGlobe, 30000);
+
+    window.addEventListener('resize', () => {
+        globe.width(container.clientWidth).height(container.clientHeight);
+    });
+</script>
+{% endblock %}

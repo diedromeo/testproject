@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Dark Web Alerts - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Dark Web Alerts</h1><p>All dark web findings and incidents</p></div></div>
+
+<div class="card"><div class="card-body no-pad"><div class="tbl-wrap">
+    <table class="tbl">
+        <thead><tr><th>Status</th><th>Title</th><th>Severity</th><th>Type</th><th>Source</th><th>Discovered</th></tr></thead>
+        <tbody>
+            {% for a in alerts %}
+            <tr style="cursor:pointer;" onclick="location.href='{% url 'darkweb:alert_detail' a.pk %}'">
+                <td><span class="badge badge-{{ a.status }}">{{ a.get_status_display }}</span></td>
+                <td style="font-weight:500;">{{ a.title|truncatewords:10 }}</td>
+                <td><span class="badge badge-{{ a.severity }}">{{ a.severity|upper }}</span></td>
+                <td>{{ a.get_alert_type_display }}</td>
+                <td>{{ a.source }}</td>
+                <td style="white-space:nowrap;">{{ a.discovered_at|timesince }} ago</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6"><div class="empty-state"><p>No alerts</p></div></td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div></div></div>
+
+<a href="{% url 'darkweb:dashboard' %}" class="btn btn-ghost btn-sm" style="margin-top:12px;">&larr; Back</a>
+{% endblock %}

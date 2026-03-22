@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}AI Assistant - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head" style="margin-bottom:12px;"><div><h1>AI Security Assistant</h1><p>CVE analysis, compliance guidance, threat intelligence</p></div></div>
+
+<div class="chat-wrap">
+    <div class="chat-msgs" id="chatMessages">
+        <div class="msg assistant">
+            <div class="msg-avatar" style="background:#4F46E5; color:white; font-size:10px;">CISO</div>
+            <div class="msg-bubble" style="line-height:1.6; max-width:85%;">
+                <h3 style="margin-bottom:12px; color:#4F46E5;">CISO AI Assistant</h3>
+                <p>I'm your cybersecurity and compliance AI assistant. I can help you with:</p>
+
+                <div style="margin-top:16px;">
+                    <div style="margin-bottom:12px;">
+                        <strong style="display:flex;align-items:center;gap:6px;"><span style="font-size:16px;">&#x1F50D;</span> CVE Analysis</strong>
+                        <ul style="margin:4px 0 0 24px; color:var(--text-secondary); font-size:13px;">
+                            <li>Explain specific CVEs (try: "Explain CVE-2024-21762")</li>
+                            <li>Assess vulnerability impact</li>
+                            <li>Recommend mitigations</li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-bottom:12px;">
+                        <strong style="display:flex;align-items:center;gap:6px;"><span style="font-size:16px;">&#x1F4CB;</span> Compliance Guidance</strong>
+                        <ul style="margin:4px 0 0 24px; color:var(--text-secondary); font-size:13px;">
+                            <li>Framework comparisons (ISO, GDPR, DPDP, SOC2, HIPAA, PCI DSS)</li>
+                            <li>Indian regulatory requirements (RBI, NPCI, SEBI, IRDAI)</li>
+                            <li>Audit preparation</li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-bottom:12px;">
+                        <strong style="display:flex;align-items:center;gap:6px;"><span style="font-size:16px;">&#x1F3E2;</span> Vendor Risk</strong>
+                        <ul style="margin:4px 0 0 24px; color:var(--text-secondary); font-size:13px;">
+                            <li>Risk assessment methodology</li>
+                            <li>Third-party evaluation criteria</li>
+                            <li>Continuous monitoring strategies</li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-bottom:12px;">
+                        <strong style="display:flex;align-items:center;gap:6px;"><span style="font-size:16px;">&#x1F6E1;</span> Threat Intelligence</strong>
+                        <ul style="margin:4px 0 0 24px; color:var(--text-secondary); font-size:13px;">
+                            <li>Current threat landscape analysis</li>
+                            <li>Incident response guidance</li>
+                            <li>Attack vector explanations</li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-bottom:12px;">
+                        <strong style="display:flex;align-items:center;gap:6px;"><span style="font-size:16px;">&#x1F4A1;</span> Example Questions:</strong>
+                        <ul style="margin:4px 0 0 24px; color:var(--text-secondary); font-size:13px; font-style:italic;">
+                            <li>"What is the DPDP Act and how does it affect my organization?"</li>
+                            <li>"Explain CVE-2024-3400 and its impact"</li>
+                            <li>"How should I assess vendor cybersecurity risk?"</li>
+                            <li>"What are CERT-IN reporting requirements?"</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <p style="margin-top:16px; font-weight:600; color:#111827;">Ask me anything about cybersecurity, compliance, or threat intelligence!</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-input-area">
+        <textarea id="chatInput" class="chat-input" placeholder="Ask about CVEs, compliance, threats..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"></textarea>
+        <button class="chat-send" onclick="sendMsg()">&#x27A4;</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let sid = null;
+
+async function sendMsg() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+    addMsg(msg, 'user');
+    input.value = '';
+    input.style.height = 'auto';
+    const typing = addTyping();
+
+    try {
+        const r = await fetch('{% url "ai_assistant:chat_api" %}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ message: msg, session_id: sid })
+        });
+        const d = await r.json();
+        typing.remove();
+        if (d.response) { addMsg(d.response, 'assistant'); sid = d.session_id; }
+        else addMsg('Error: ' + (d.error || 'Unknown'), 'assistant');
+    } catch (e) { typing.remove(); addMsg('Connection error.', 'assistant'); }
+}
+
+function addMsg(content, role) {
+    const c = document.getElementById('chatMessages');
+    const d = document.createElement('div');
+    d.className = 'msg ' + role;
+    d.innerHTML = `<div class="msg-avatar">${role==='user'?'You':'TS'}</div><div class="msg-bubble">${fmtMd(content)}</div>`;
+    c.appendChild(d);
+    c.scrollTop = c.scrollHeight;
+}
+
+function addTyping() {
+    const c = document.getElementById('chatMessages');
+    const d = document.createElement('div');
+    d.className = 'msg assistant';
+    d.innerHTML = '<div class="msg-avatar">TS</div><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+    c.appendChild(d);
+    c.scrollTop = c.scrollHeight;
+    return d;
+}
+
+function fmtMd(t) {
+    return t.replace(/### (.*?)$/gm,'<h4>$1</h4>').replace(/## (.*?)$/gm,'<h3>$1</h3>')
+        .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>')
+        .replace(/`(.*?)`/g,'<code>$1</code>').replace(/^- (.*?)$/gm,'<li>$1</li>')
+        .replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+}
+
+document.getElementById('chatInput').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+});
+</script>
+{% endblock %}

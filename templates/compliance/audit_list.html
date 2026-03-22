@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Audits - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Audit Overview & Timeline</h1><p>Compliance validation and auditor assessments</p></div></div>
+
+<!-- Audit Timeline Section -->
+<div style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 32px;">
+    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 24px;">Upcoming Audit Timeline</h3>
+    <div style="display: flex; gap: 0; position: relative;">
+        <!-- Timeline Line -->
+        <div style="position: absolute; top: 12px; left: 0; right: 0; height: 2px; background: var(--border); z-index: 1;"></div>
+        
+        <!-- Timeline Items -->
+        <div style="flex: 1; text-align: center; position: relative; z-index: 2;">
+            <div style="width: 24px; height: 24px; background: var(--success); border: 4px solid var(--bg-surface); border-radius: 50%; margin: 0 auto 12px;"></div>
+            <div style="font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Jan 2026</div>
+            <div style="font-size: 11px; color: var(--text-muted); padding: 0 8px;">SOC 2 Type 1 (Passed)</div>
+        </div>
+        
+        <div style="flex: 1; text-align: center; position: relative; z-index: 2;">
+            <div style="width: 24px; height: 24px; background: var(--success); border: 4px solid var(--bg-surface); border-radius: 50%; margin: 0 auto 12px;"></div>
+            <div style="font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Feb 2026</div>
+            <div style="font-size: 11px; color: var(--text-muted); padding: 0 8px;">PCI DSS Validation</div>
+        </div>
+
+        <div style="flex: 1; text-align: center; position: relative; z-index: 2;">
+            <div style="width: 24px; height: 24px; background: var(--brand); border: 4px solid var(--bg-surface); border-radius: 50%; margin: 0 auto 12px; box-shadow: 0 0 0 4px rgba(79,70,229,0.2);"></div>
+            <div style="font-size: 12px; font-weight: 600; color: var(--brand); margin-bottom: 4px;">Apr 2026 (Upcoming)</div>
+            <div style="font-size: 11px; color: var(--text-muted); padding: 0 8px;">RBI Master Direction Audit</div>
+        </div>
+
+        <div style="flex: 1; text-align: center; position: relative; z-index: 2;">
+            <div style="width: 24px; height: 24px; background: #E5E7EB; border: 4px solid var(--bg-surface); border-radius: 50%; margin: 0 auto 12px;"></div>
+            <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Aug 2026</div>
+            <div style="font-size: 11px; color: var(--text-muted); padding: 0 8px;">ISO 27001 Surveillance</div>
+        </div>
+
+        <div style="flex: 1; text-align: center; position: relative; z-index: 2;">
+            <div style="width: 24px; height: 24px; background: #E5E7EB; border: 4px solid var(--bg-surface); border-radius: 50%; margin: 0 auto 12px;"></div>
+            <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Nov 2026</div>
+            <div style="font-size: 11px; color: var(--text-muted); padding: 0 8px;">SOC 2 Type 2 Report</div>
+        </div>
+    </div>
+</div>
+
+<div class="card"><div class="card-body no-pad"><div class="tbl-wrap">
+    <table class="tbl">
+        <thead><tr><th>Framework</th><th>Auditor</th><th>Type</th><th>Status</th><th>Score</th><th>Date</th></tr></thead>
+        <tbody>
+            {% for a in audits %}
+            <tr>
+                <td><a href="{% url 'compliance:framework_detail' a.framework.pk %}">{{ a.framework.name }}</a></td>
+                <td>{{ a.auditor_name }}</td>
+                <td>{{ a.audit_type }}</td>
+                <td><span class="badge badge-{{ a.status }}">{{ a.get_status_display }}</span></td>
+                <td class="mono">{% if a.score %}{{ a.score|floatformat:1 }}%{% else %}&mdash;{% endif %}</td>
+                <td>{{ a.audit_date|timesince }} ago</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6"><div class="empty-state"><p>No audits</p></div></td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div></div></div>
+
+<a href="{% url 'compliance:framework_list' %}" class="btn btn-ghost btn-sm" style="margin-top:12px;">&larr; Back</a>
+{% endblock %}

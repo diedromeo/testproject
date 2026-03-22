@@ -1,0 +1,31 @@
+{% extends 'public_base.html' %}
+{% block title %}Contact Us - ThreatShield{% endblock %}
+{% block content %}
+<header class="page-header">
+    <div class="container">
+        <h1>Contact the ThreatShield Team</h1>
+        <p>Get in touch for enterprise deployments or general inquiries.</p>
+    </div>
+</header>
+<section class="container" style="padding: 80px 24px; max-width: 600px; margin: 0 auto;">
+    
+    <div style="background: #fff; padding: 40px; border-radius: 12px; border: 1px solid #E5E7EB; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
+        <form>
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Full Name</label>
+                <input type="text" style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #D1D5DB; font-size: 16px;">
+            </div>
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Work Email</label>
+                <input type="email" style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #D1D5DB; font-size: 16px;">
+            </div>
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px;">How can we help you?</label>
+                <textarea rows="4" style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #D1D5DB; font-size: 16px;"></textarea>
+            </div>
+            <button type="button" style="width: 100%; background: var(--brand); color: #fff; padding: 14px; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer;">Send Message</button>
+        </form>
+    </div>
+
+</section>
+{% endblock %}

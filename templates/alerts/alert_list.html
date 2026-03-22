@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Alerts - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Security Alerts</h1><p>Real-time notifications and incident tracking</p></div></div>
+
+<div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+    <div class="stat-card"><div class="sc-label" style="color:var(--danger);">Open</div><div class="sc-value">{{ open_count }}</div></div>
+    <div class="stat-card"><div class="sc-label" style="color:var(--severity-critical);">Critical</div><div class="sc-value">{{ critical_count }}</div></div>
+    <div class="stat-card"><div class="sc-label">Total</div><div class="sc-value">{{ total_count }}</div></div>
+</div>
+
+<div class="filters">
+    <a href="{% url 'alerts:alert_list' %}" class="pill {% if not status_filter %}active{% endif %}">All</a>
+    <a href="?status=open" class="pill {% if status_filter == 'open' %}active{% endif %}">Open</a>
+    <a href="?status=investigating" class="pill {% if status_filter == 'investigating' %}active{% endif %}">Investigating</a>
+    <a href="?status=resolved" class="pill {% if status_filter == 'resolved' %}active{% endif %}">Resolved</a>
+</div>
+
+<div class="card"><div class="card-body no-pad"><div class="tbl-wrap">
+    <table class="tbl">
+        <thead><tr><th>Status</th><th>Title</th><th>Severity</th><th>Type</th><th>CVE</th><th>Time</th><th>Action</th></tr></thead>
+        <tbody>
+            {% for alert in alerts %}
+            <tr>
+                <td><span class="badge badge-{{ alert.status }}">{{ alert.status }}</span></td>
+                <td><a href="{% url 'alerts:alert_detail' alert.pk %}">{{ alert.title|truncatewords:8 }}</a></td>
+                <td><span class="badge badge-{{ alert.severity }}">{{ alert.severity|upper }}</span></td>
+                <td>{{ alert.get_alert_type_display }}</td>
+                <td>{% if alert.linked_cve %}<span class="mono" style="color:var(--brand-secondary);">{{ alert.linked_cve.cve_id }}</span>{% else %}&mdash;{% endif %}</td>
+                <td style="white-space:nowrap;">{{ alert.created_at|timesince }} ago</td>
+                <td>{% if alert.status == 'open' %}<a href="{% url 'alerts:resolve_alert' alert.pk %}" class="btn btn-success btn-xs">Resolve</a>{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7"><div class="empty-state"><p>No alerts found</p></div></td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div></div></div>
+{% endblock %}

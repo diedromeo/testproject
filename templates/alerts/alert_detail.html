@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Alert - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Alert Detail</h1></div></div>
+
+<div class="detail-header">
+    <div style="flex:1;">
+        <div class="detail-title">{{ alert.title }}</div>
+        <div class="detail-meta">
+            <span class="detail-meta-item"><span class="badge badge-{{ alert.severity }}">{{ alert.severity|upper }}</span></span>
+            <span class="detail-meta-item"><span class="badge badge-{{ alert.status }}">{{ alert.status }}</span></span>
+            <span class="detail-meta-item">{{ alert.get_alert_type_display }}</span>
+            <span class="detail-meta-item">{{ alert.created_at|timesince }} ago</span>
+        </div>
+    </div>
+    {% if alert.status == 'open' %}<a href="{% url 'alerts:resolve_alert' alert.pk %}" class="btn btn-success btn-sm">Resolve Alert</a>{% endif %}
+</div>
+
+<div class="card"><div class="card-head"><h3>Description</h3></div><div class="card-body"><div class="detail-text">{{ alert.description }}</div></div></div>
+
+{% if alert.linked_cve %}
+<div class="card" style="margin-top:16px;"><div class="card-head"><h3>Linked CVE</h3></div><div class="card-body no-pad">
+    <a href="{% url 'cve_engine:cve_detail' alert.linked_cve.cve_id %}" class="cve-row">
+        <div class="cve-severity-dot {{ alert.linked_cve.severity_level|lower }}"></div>
+        <div class="cve-info">
+            <div class="cve-id">{{ alert.linked_cve.cve_id }}</div>
+            <div class="cve-desc">{{ alert.linked_cve.description|truncatewords:25 }}</div>
+        </div>
+        <span class="cve-score badge-{{ alert.linked_cve.severity_level|lower }}">{{ alert.linked_cve.severity_score }}</span>
+    </a>
+</div></div>
+{% endif %}
+
+<a href="{% url 'alerts:alert_list' %}" class="btn btn-ghost btn-sm" style="margin-top:12px;">&larr; Back</a>
+{% endblock %}

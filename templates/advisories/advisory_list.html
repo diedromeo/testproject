@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Security Advisories - ThreatShield{% endblock %}
+{% block page_title_header %}Security Intelligence Blog{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Security Advisories</h1>
+        <p>Expert analysis, vulnerability alerts, and remediation guidance from ThreatShield Research.</p>
+    </div>
+    <div style="display:flex; gap:10px;">
+        <button class="btn btn-ghost btn-sm" onclick="fetchCVEsNow()"><i class="fa-solid fa-sync"></i> Refresh Data</button>
+    </div>
+</div>
+
+<div class="filters" style="margin-bottom:30px;">
+    <a href="{% url 'advisories:advisory_list' %}" class="pill {% if not severity_filter %}active{% endif %}">Latest Dossiers</a>
+    <a href="?severity=critical" class="pill {% if severity_filter == 'critical' %}active{% endif %}">Critical Threats</a>
+    <a href="?severity=high" class="pill {% if severity_filter == 'high' %}active{% endif %}">High Priority</a>
+    <a href="?severity=medium" class="pill {% if severity_filter == 'medium' %}active{% endif %}">General Advisories</a>
+</div>
+
+<div class="blog-grid">
+    {% for adv in advisories %}
+    <a href="{% url 'advisories:advisory_detail' adv.pk %}" class="blog-card" style="text-decoration:none; color:inherit;">
+        <div class="blog-card-img" style="background: linear-gradient(135deg, {% if adv.severity == 'critical' %}#450a0a, #991b1b{% elif adv.severity == 'high' %}#431407, #9a3412{% else %}#0f172a, #334155{% endif %});">
+            <i class="fa-solid {% if adv.severity == 'critical' %}fa-radiation{% elif adv.severity == 'high' %}fa-biohazard{% else %}fa-shield-halved{% endif %}"></i>
+            <div style="position:absolute; bottom:10px; right:10px;">
+                <span class="badge badge-{{ adv.severity }}">{{ adv.severity|upper }}</span>
+            </div>
+        </div>
+        <div class="blog-card-content">
+            <div class="blog-category">{% if adv.linked_cve %}{{ adv.linked_cve.cve_id }}{% else %}THREAT_REPORT{% endif %}</div>
+            <h3 class="blog-title">{{ adv.title }}</h3>
+            <p class="blog-excerpt">{{ adv.description|truncatewords:25 }}</p>
+            
+            <div class="blog-meta">
+                <span>By {{ adv.source }}</span>
+                <span>{{ adv.created_at|timesince }} ago</span>
+            </div>
+        </div>
+    </a>
+    {% empty %}
+    <div class="empty-state" style="grid-column: 1 / -1; padding: 100px 0;">
+        <i class="fa-solid fa-folder-open" style="font-size:48px; color:var(--text-tertiary); margin-bottom:20px;"></i>
+        <h3>No intelligence found</h3>
+        <p>Switch filters or fetch new CVE data to populate the blog.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

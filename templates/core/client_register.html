@@ -1,0 +1,44 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - ThreatShield</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-box" style="max-width: 440px;">
+            <div class="auth-logo">
+                <div class="logo-mark">TS</div>
+                <h1>Create Client Account</h1>
+                <p>Start monitoring your security posture</p>
+            </div>
+
+            {% if error %}
+            <div class="auth-error">{{ error }}</div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <input type="text" name="first_name" placeholder="First name" required>
+                    <input type="text" name="last_name" placeholder="Last name" required>
+                </div>
+                <input type="text" name="organization" placeholder="Organization name" required style="margin-top:12px;">
+                <input type="email" name="email" placeholder="Work email" required>
+                <input type="text" name="username" placeholder="Choose a username" required>
+                <input type="password" name="password1" placeholder="Password (min 8 characters)" required>
+                <input type="password" name="password2" placeholder="Confirm password" required>
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </form>
+
+            <div class="auth-footer">
+                Already have an account? <a href="{% url 'core:client_login' %}">Sign in</a>
+                <br><a href="{% url 'core:login' %}" style="margin-top:8px;display:inline-block;">&larr; Back to portal</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}CVE Feed - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>CVE Intelligence Feed</h1>
+        <p>Live vulnerability tracking from NVD</p>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="fetchCVEsNow()">&#x21BB; Fetch Latest</button>
+</div>
+
+<div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat-card"><div class="sc-label">Total CVEs</div><div class="sc-value">{{ total_cves }}</div></div>
+    <div class="stat-card"><div class="sc-label" style="color:var(--severity-critical);">Critical</div><div class="sc-value">{{ critical_count }}</div></div>
+    <div class="stat-card"><div class="sc-label" style="color:var(--severity-high);">High</div><div class="sc-value">{{ high_count }}</div></div>
+    <div class="stat-card"><div class="sc-label" style="color:var(--severity-medium);">Medium</div><div class="sc-value">{{ medium_count }}</div></div>
+</div>
+
+<div class="filters">
+    <a href="{% url 'cve_engine:cve_feed' %}" class="pill {% if not severity_filter %}active{% endif %}">All</a>
+    <a href="?severity=critical" class="pill {% if severity_filter == 'critical' %}active{% endif %}">Critical</a>
+    <a href="?severity=high" class="pill {% if severity_filter == 'high' %}active{% endif %}">High</a>
+    <a href="?severity=medium" class="pill {% if severity_filter == 'medium' %}active{% endif %}">Medium</a>
+    <a href="?severity=low" class="pill {% if severity_filter == 'low' %}active{% endif %}">Low</a>
+</div>
+
+<div class="card">
+    <div class="card-body no-pad">
+        <div class="tbl-wrap">
+            <table class="tbl">
+                <thead>
+                    <tr><th>CVE ID</th><th>Description</th><th>Severity</th><th>Score</th><th>Vendor</th><th>Published</th></tr>
+                </thead>
+                <tbody>
+                    {% for cve in cves %}
+                    <tr style="cursor:pointer;" onclick="location.href='{% url 'cve_engine:cve_detail' cve.cve_id %}'">
+                        <td><span class="mono" style="color:var(--brand-secondary);">{{ cve.cve_id }}</span></td>
+                        <td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ cve.description|truncatewords:15 }}</td>
+                        <td><span class="badge badge-{{ cve.severity_level|lower }}">{{ cve.severity_level }}</span></td>
+                        <td class="mono" style="font-weight:600;">{{ cve.severity_score }}</td>
+                        <td>{{ cve.vendor|default:"Unknown" }}</td>
+                        <td style="white-space:nowrap;">{{ cve.published_date|timesince }} ago</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6"><div class="empty-state"><p>No CVEs found. Click Fetch Latest.</p></div></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

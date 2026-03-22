@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% block title %}Compliance Checklists - ThreatShield{% endblock %}
+
+{% block extra_css %}
+<style>
+    .checklist-container {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 32px;
+        margin-top: 24px;
+    }
+    .framework-sidebar {
+        @apply flex flex-col gap-3;
+    }
+    .framework-btn {
+        @apply p-4 rounded-xl border border-white/5 bg-[#0f172a]/40 text-left transition-all hover:bg-slate-800/50 cursor-pointer;
+    }
+    .framework-btn.active {
+        @apply border-indigo-500 bg-indigo-500/10 text-white shadow-[0_0_20px_rgba(99,102,241,0.1)];
+    }
+    .control-item {
+        @apply p-5 bg-[#0f172a]/40 border border-white/5 rounded-2xl mb-4 transition-all hover:border-white/10 flex items-start gap-5 group;
+    }
+    .control-item.completed {
+        @apply border-emerald-500/30 bg-emerald-500/5;
+    }
+    .check-btn {
+        @apply w-6 h-6 rounded-lg border-2 border-slate-700 flex items-center justify-center transition-all cursor-pointer flex-shrink-0 mt-1;
+    }
+    .completed .check-btn {
+        @apply bg-emerald-500 border-emerald-500 text-white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1 class="cyber-glow">Regulatory Checklists</h1>
+        <p>Real-time audit preparedness and control implementation tracking</p>
+    </div>
+    <div class="flex items-center gap-4">
+        <div class="text-right">
+            <div id="check-stat" class="text-2xl font-black text-emerald-400">0%</div>
+            <div class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Global Preparedness</div>
+        </div>
+        <div class="w-24 h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div id="progress-bar" class="h-full bg-emerald-500 transition-all duration-500" style="width: 0%"></div>
+        </div>
+    </div>
+</div>
+
+<div class="checklist-container">
+    <div class="framework-sidebar">
+        <div class="framework-btn active" onclick="switchFramework('dpdp')">
+            <div class="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1">India Regulatory</div>
+            <div class="font-bold text-slate-100">DPDP Act 2023</div>
+        </div>
+        <div class="framework-btn" onclick="switchFramework('soc2')">
+            <div class="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">Audit Ready</div>
+            <div class="font-bold text-slate-100 text-sm">SOC 2 Type II</div>
+        </div>
+        <div class="framework-btn" onclick="switchFramework('iso')">
+            <div class="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1">Security Standard</div>
+            <div class="font-bold text-slate-100 text-sm">ISO 27001:2022</div>
+        </div>
+        <div class="framework-btn" onclick="switchFramework('rbi')">
+            <div class="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Banking Compliance</div>
+            <div class="font-bold text-slate-100 text-sm">RBI Cyber Security</div>
+        </div>
+    </div>
+
+    <div class="main-checklist">
+        <div id="checklist-content">
+            <!-- Items injected by JS -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CHECKLISTS = {
+    dpdp: [
+        { id: 'dpdp1', title: 'Data Fiduciary Registration', desc: 'Ensure the organization is registered under the Data Protection Board of India (DPBI) guidelines.' },
+        { id: 'dpdp2', title: 'Consent Management Gateway', desc: 'Implement a user-facing dashboard for withdrawal of consent and logging of principal requests.' },
+        { id: 'dpdp3', title: 'Data Protection Officer (DPO)', desc: 'Appoint a resident DPO for receiving grievances and acting as a liaison with regulatory bodies.' },
+        { id: 'dpdp4', title: 'Data Audit Protocol', desc: 'Establish periodic auditing by independent data auditors for high-volume fiduciaries.' },
+        { id: 'dpdp5', title: 'Principal Rights Interface', desc: 'Web portal for users to access, correct, or erase their personal data records.' }
+    ],
+    soc2: [
+        { id: 'soc2_1', title: 'Change Management Approval', desc: 'Evidence of 2-party signoff for all production code deployments in CI/CD pipeline.' },
+        { id: 'soc2_2', title: 'Intrusion Detection Monitoring', desc: 'Real-time alerting for unauthorized access attempts on RDS and EC2 instances.' },
+        { id: 'soc2_3', title: 'VPC Flow Log Analysis', desc: 'Retention and periodic review of network traffic patterns between enclaves.' },
+        { id: 'soc2_4', title: 'Disaster Recovery Warm-Site', desc: 'Verified 4-hour RTO for critical customer-facing banking services.' }
+    ],
+    iso: [
+        { id: 'iso1', title: 'Access Control Matrix', desc: 'Documented mapping of job roles to system permissions via IAM policies.' },
+        { id: 'iso2', title: 'Physical Security Audit', desc: 'Biometric access logs and camera surveillance for data center perimeter (A.11).' },
+        { id: 'iso3', title: 'Supply Chain Risk Map', desc: 'Third-party vendor assessment and inclusion of infosec clauses in contracts.' }
+    ],
+    rbi: [
+        { id: 'rbi1', title: 'Board approved Cyber Security Policy', desc: 'Comprehensive policy covering governance, risk, controls, and assurance approved by the Board.' },
+        { id: 'rbi2', title: 'Operational Resilience and Business Continuity', desc: 'Disaster Recovery (DR) and Business Continuity Plan (BCP) with RTO/RPO metrics.' },
+        { id: 'rbi3', title: 'Customer Data Confidentiality', desc: 'Encryption of sensitive customer data at rest and in transit (AES-256).' },
+        { id: 'rbi4', title: 'API Security and Management', desc: 'Secure API gateways with rate limiting, OAuth 2.0, and payload validation.' }
+    ]
+};
+
+let activeFramework = 'dpdp';
+let completedIds = new Set(JSON.parse(localStorage.getItem('completedChecklist') || '[]'));
+
+function switchFramework(id) {
+    activeFramework = id;
+    document.querySelectorAll('.framework-btn').forEach(btn => btn.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    renderChecklist();
+}
+
+function renderChecklist() {
+    const list = CHECKLISTS[activeFramework];
+    const container = document.getElementById('checklist-content');
+    let html = '';
+    
+    list.forEach(item => {
+        const isDone = completedIds.has(item.id);
+        html += `
+            <div class="control-item ${isDone ? 'completed' : ''}" onclick="toggleCheck('${item.id}')">
+                <div class="check-btn"><i class="fa-solid fa-check ${isDone ? '' : 'hidden'}"></i></div>
+                <div class="flex-1">
+                    <h4 class="text-sm font-bold text-slate-100 mb-1">${item.title}</h4>
+                    <p class="text-[11px] text-slate-500 leading-relaxed">${item.desc}</p>
+                </div>
+                <div class="text-[9px] font-bold text-slate-600 uppercase tracking-tighter mt-1">
+                    ${activeFramework.toUpperCase()} • ACTIVE
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+    updateProgress();
+}
+
+function toggleCheck(id) {
+    if (completedIds.has(id)) completedIds.delete(id);
+    else completedIds.add(id);
+    
+    localStorage.setItem('completedChecklist', JSON.stringify([...completedIds]));
+    renderChecklist();
+}
+
+function updateProgress() {
+    let total = 0, done = 0;
+    Object.values(CHECKLISTS).forEach(list => {
+        total += list.length;
+        list.forEach(i => { if(completedIds.has(i.id)) done++; });
+    });
+    
+    const pct = Math.round((done / total) * 100);
+    document.getElementById('check-stat').textContent = `${pct}%`;
+    document.getElementById('progress-bar').style.width = `${pct}%`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Check if the current event is from a button click instead of DOMContentLoaded
+    renderChecklist();
+});
+</script>
+{% endblock %}

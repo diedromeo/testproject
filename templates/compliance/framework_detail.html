@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}{{ framework.name }} - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>{{ framework.name }}</h1><p>{{ framework.description }}</p></div></div>
+
+<div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+    <div class="stat-card"><div class="sc-label">Compliance</div><div class="sc-value" style="color:{% if compliance_pct >= 70 %}var(--success){% elif compliance_pct >= 40 %}var(--warning){% else %}var(--danger){% endif %};">{{ compliance_pct }}%</div></div>
+    <div class="stat-card"><div class="sc-label">Controls</div><div class="sc-value">{{ controls.count }}</div></div>
+    <div class="stat-card"><div class="sc-label">Type</div><div class="sc-value" style="font-size:16px;">{{ framework.get_framework_type_display }}</div></div>
+</div>
+
+<div class="card"><div class="card-head"><h3>Controls</h3></div><div class="card-body no-pad"><div class="tbl-wrap">
+    <table class="tbl">
+        <thead><tr><th>Control ID</th><th>Title</th><th>Category</th><th>Status</th></tr></thead>
+        <tbody>
+            {% for c in controls %}
+            <tr>
+                <td><span class="mono" style="color:var(--brand-secondary);">{{ c.control_id }}</span></td>
+                <td>{{ c.title }}</td>
+                <td>{{ c.category }}</td>
+                <td><span class="badge badge-{{ c.status }}">{{ c.get_status_display }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div></div></div>
+
+<a href="{% url 'compliance:framework_list' %}" class="btn btn-ghost btn-sm" style="margin-top:12px;">&larr; Back</a>
+{% endblock %}

@@ -1,0 +1,453 @@
+{% extends 'base.html' %}
+{% block title %}LEAKOSINT PRO | Tactical OSINT Node{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- OSINT Visualization & PDF Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/api/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+<style>
+    :root {
+        --accent-glow: 0 0 15px rgba(0, 242, 255, 0.4);
+        --accent-color: #00f2ff;
+        --border-color: rgba(0, 242, 255, 0.1);
+        --glass-bg: rgba(5, 6, 8, 0.85);
+    }
+
+    .cyber-layout {
+        display: grid;
+        grid-template-columns: 400px 1fr;
+        gap: 2rem;
+        height: calc(100vh - 120px);
+        padding-top: 1rem;
+    }
+
+    .terminal-sidebar {
+        background: var(--glass-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 24px;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        backdrop-filter: blur(10px);
+        box-shadow: var(--accent-glow);
+    }
+
+    .intel-main {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        overflow-y: auto;
+        padding-right: 1rem;
+    }
+
+    .stats-header {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+
+    .stat-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
+        border-radius: 20px;
+        text-align: center;
+        transition: all 0.3s;
+    }
+    .stat-card:hover { border-color: var(--accent-color); box-shadow: var(--accent-glow); }
+    .stat-value { font-size: 1.75rem; font-weight: 900; color: var(--accent-color); display: block; letter-spacing: -1px; }
+    .stat-label { font-size: 0.65rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+
+    .control-group { margin-bottom: 2rem; }
+    .control-label { display: block; font-size: 0.65rem; font-weight: 900; color: var(--accent-color); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.75rem; }
+    .control-input { width: 100%; background: #0c0e12; border: 1px solid #1e293b; color: white; padding: 1rem; border-radius: 12px; font-size: 0.85rem; outline: none; transition: border 0.3s; }
+    .control-input:focus { border-color: var(--accent-color); }
+
+    #cy { width: 100%; height: 600px; background: rgba(0,0,0,0.3); border-radius: 24px; border: 1px solid var(--border-color); overflow: hidden; }
+
+    .status-badge { font-size: 0.65rem; font-weight: 900; padding: 4px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid transparent; }
+    .status-idle { background: rgba(100,116,139,0.1); color: #64748b; border-color: rgba(100,116,139,0.2); }
+    .status-active { background: rgba(0,242,255,0.1); color: var(--accent-color); border-color: rgba(0,242,255,0.3); animation: pulse 2s infinite; }
+
+    .data-card { background: var(--glass-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .data-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .data-key { font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: 700; width: 40%; }
+    .data-val { font-size: 0.75rem; color: white; font-family: 'JetBrains Mono', monospace; width: 60%; text-align: right; word-break: break-all; }
+
+    @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; box-shadow: var(--accent-glow); } 100% { opacity: 0.8; } }
+
+    /* Node Info Panel */
+    #node-info { position: absolute; right: 20px; top: 180px; width: 300px; background: var(--glass-bg); border: 1px solid var(--accent-color); border-radius: 16px; padding: 1.5rem; backdrop-filter: blur(20px); z-index: 10; display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cyber-layout">
+    <!-- Sidebar Controls -->
+    <aside class="terminal-sidebar">
+        <div class="flex justify-between items-center mb-10">
+            <h2 class="text-xl font-black text-white tracking-widest uppercase"><i class="fa-solid fa-terminal mr-3 text-cyan-400"></i>LEAKOSINT PRO</h2>
+            <div id="status-badge" class="status-badge status-idle">IDLE_STATE</div>
+        </div>
+
+        <!-- Token Hidden -->
+        <input type="hidden" id="token" value="5724161818:nbbGdLLP">
+
+        <div class="control-group">
+            <label class="control-label">Target Identifier</label>
+            <textarea id="request" rows="5" class="control-input" placeholder="Search emails, domains, phone numbers..."></textarea>
+            <p class="text-[9px] text-slate-500 mt-2 font-bold tracking-widest uppercase">Multi-line search protocol enabled.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <div class="control-group m-0">
+                <label class="control-label">Limit</label>
+                <input type="number" id="limit" class="control-input" value="100" min="100">
+            </div>
+            <div class="control-group m-0">
+                <label class="control-label">Region</label>
+                <select id="lang" class="control-input">
+                    <option value="en">Global (EN)</option>
+                    <option value="ru">Eastern (RU)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">Intel Rendering</label>
+            <select id="display-mode" class="control-input">
+                <option value="normal">Structured View</option>
+                <option value="graph">Neural Correlation Map</option>
+                <option value="json">Raw Terminal JSON</option>
+            </select>
+        </div>
+
+        <button id="search-btn" class="w-full py-5 bg-cyan-600 hover:bg-cyan-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all transform active:scale-95 shadow-lg shadow-cyan-900/20 flex items-center justify-center gap-3">
+            <i class="fa-solid fa-satellite-dish"></i> START INVESTIGATION
+        </button>
+
+        <button id="demo-btn" class="w-full py-3 mt-4 border border-white/5 hover:border-cyan-500/50 text-slate-500 hover:text-cyan-400 font-bold uppercase tracking-widest text-[9px] rounded-xl transition-all">
+            <i class="fa-solid fa-vial"></i> Load Demo Recon
+        </button>
+
+        <div class="mt-auto pt-8 border-t border-white/5">
+            <label class="control-label mb-4 block">Intelligence Dossier</label>
+            <div class="grid grid-cols-3 gap-2">
+                <button id="dl-json" class="py-2 bg-slate-800 text-[9px] font-bold rounded">JSON</button>
+                <button id="dl-csv" class="py-2 bg-slate-800 text-[9px] font-bold rounded">CSV</button>
+                <button id="dl-pdf" class="py-2 bg-slate-800 text-[9px] font-bold rounded">PDF</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Results -->
+    <main class="intel-main">
+        <div class="stats-header">
+            <div class="stat-card">
+                <span id="stat-hits" class="stat-value">0</span>
+                <span class="stat-label">Confirmed Hits</span>
+            </div>
+            <div class="stat-card">
+                <span id="stat-sources" class="stat-value">0</span>
+                <span class="stat-label">Intel Nodes</span>
+            </div>
+            <div class="stat-card">
+                <span id="stat-latency" class="stat-value">0ms</span>
+                <span class="stat-label">Uplink Latency</span>
+            </div>
+        </div>
+
+        <!-- Rendering Areas -->
+        <div id="view-normal" class="hidden">
+            <div id="formatted-results">
+                <!-- Cards populated here -->
+                <div class="p-20 text-center opacity-30">
+                    <i class="fa-solid fa-database text-6xl mb-6"></i>
+                    <p class="font-bold uppercase tracking-[0.4em] text-xs">Waiting for Recon initiation...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-graph" class="hidden relative">
+            <div id="cy"></div>
+            <div id="node-info">
+                <div class="flex justify-between mb-4">
+                    <span id="node-type" class="text-[9px] font-black text-cyan-400 uppercase tracking-widest">Entity Intel</span>
+                    <i id="close-node-info" class="fa-solid fa-xmark cursor-pointer"></i>
+                </div>
+                <h3 id="node-label" class="text-lg font-bold text-white mb-6 break-all">Identifier</h3>
+                <div id="node-links" class="flex flex-col gap-3"></div>
+            </div>
+        </div>
+
+        <div id="view-json" class="hidden bg-black/40 border border-white/5 p-8 rounded-3xl h-[600px] overflow-auto font-mono text-[11px] leading-relaxed">
+            <div class="flex justify-between items-center mb-6">
+                <span class="text-cyan-400 font-bold uppercase tracking-widest text-[9px]">Raw Intelligence Stream</span>
+                <button id="copy-json" class="text-[9px] font-bold uppercase tracking-widest bg-white/5 px-4 py-1 rounded">Copy Signal</button>
+            </div>
+            <div id="json-pre"></div>
+        </div>
+
+        <!-- Real-time Terminal Logs -->
+        <div class="bg-black/80 border border-white/5 p-8 rounded-3xl h-60 overflow-auto font-mono text-[10px] leading-relaxed mt-4">
+            <div id="terminal-logs"></div>
+        </div>
+    </main>
+</div>
+
+<div id="toast-container" class="fixed bottom-10 right-10 z-[100] flex flex-col gap-4"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // UI Refs
+    const searchBtn = document.getElementById('search-btn');
+    const logs = document.getElementById('terminal-logs');
+    const resultJson = document.getElementById('json-pre');
+    const resultNormal = document.getElementById('formatted-results');
+    const statHits = document.getElementById('stat-hits');
+    const statSources = document.getElementById('stat-sources');
+    const statLatency = document.getElementById('stat-latency');
+    const badge = document.getElementById('status-badge');
+    const modeSelect = document.getElementById('display-mode');
+
+    let currentIntel = null;
+    let cyInstance = null;
+
+    // Helper: Log to Terminal
+    async function logLine(m, t = 'info', d = 50) {
+        const l = document.createElement('div');
+        l.style.padding = '4px 0';
+        const ts = new Date().toLocaleTimeString();
+        const p = t === 'error' ? '[!]' : t === 'success' ? '[+]' : '[*]';
+        const color = t === 'error' ? '#ef4444' : t === 'success' ? '#10b981' : '#00f2ff';
+        l.innerHTML = `<span style="color:#475569;margin-right:10px">${ts}</span><span style="color:${color};font-weight:bold">${p}</span> <span style="color:#cbd5e1;margin-left:5px">${m}</span>`;
+        logs.appendChild(l);
+        logs.scrollTop = logs.scrollHeight;
+        if (d > 0) await new Promise(r => setTimeout(r, d));
+    }
+
+    function showToast(m, t = 'success') {
+        const c = document.getElementById('toast-container');
+        const d = document.createElement('div');
+        d.className = 'p-4 bg-slate-900 border border-white/10 rounded-xl flex items-center gap-3 animate-slide-in';
+        d.style.borderLeft = `4px solid ${t==='error'?'#ef4444':'#10b981'}`;
+        d.innerHTML = `<i class="fa-solid ${t==='success'?'fa-check-circle':'fa-circle-exclamation'}" style="color:${t==='success'?'#10b981':'#ef4444'}"></i><span class="text-xs font-bold text-white uppercase tracking-widest">${m}</span>`;
+        c.appendChild(d);
+        setTimeout(() => { d.style.opacity = '0'; setTimeout(() => d.remove(), 500); }, 3000);
+    }
+
+    // View Management
+    function switchView() {
+        const m = modeSelect.value;
+        ['normal','graph','json'].forEach(v => {
+            const el = document.getElementById(`view-${v}`);
+            if (el) el.classList.add('hidden');
+        });
+        const activeEl = document.getElementById(`view-${m}`);
+        if (activeEl) activeEl.classList.remove('hidden');
+    }
+    modeSelect.addEventListener('change', () => { switchView(); if(currentIntel) renderAll(); });
+
+    // Main Rendering Logic
+    function renderAll() {
+        if (!currentIntel) return;
+        const m = modeSelect.value;
+        if (m === 'json') {
+            resultJson.innerHTML = `<pre style="color:#d1d5db">${syntaxHighlight(currentIntel)}</pre>`;
+        } else if (m === 'normal') {
+            renderStructured(currentIntel);
+        } else if (m === 'graph') {
+            renderGraph(currentIntel, document.getElementById('request').value);
+        }
+        updateStats(currentIntel);
+    }
+
+    function renderStructured(data) {
+        if (!data.List) { resultNormal.innerHTML = '<div class="p-20 text-center opacity-30 font-bold uppercase tracking-widest text-xs">NO DATA RECOVERED</div>'; return; }
+        let h = '';
+        const entries = Object.entries(data.List).filter(([n]) => !['error','No results found'].includes(n));
+        if (entries.length === 0) { resultNormal.innerHTML = '<div class="p-20 text-center opacity-30 font-bold uppercase tracking-widest text-xs">NULL ENTRIES IN STREAM</div>'; return; }
+        
+        entries.forEach(([db, c], i) => {
+            if (c.Data && Array.isArray(c.Data)) {
+                c.Data.forEach(row => {
+                    h += `<div class="data-card animate-slide-up" style="animation-delay:${i*0.05}s">
+                            <div class="flex items-center gap-3 mb-6">
+                                <i class="fa-solid fa-lock-open text-cyan-400 text-sm"></i>
+                                <h4 class="text-xs font-black text-white uppercase tracking-widest">${db}</h4>
+                            </div>
+                            <div class="grid gap-3">`;
+                    for (const [k, v] of Object.entries(row)) {
+                        h += `<div class="data-row"><span class="data-key">${k}</span><span class="data-val">${v}</span></div>`;
+                    }
+                    h += `</div></div>`;
+                });
+            }
+        });
+        resultNormal.innerHTML = h;
+    }
+
+    function renderGraph(data, query) {
+        const elements = [];
+        const rootId = 'target_node';
+        elements.push({ data: { id: rootId, label: 'TARGET: ' + query.split('\n')[0].substring(0,25), type: 'root', color: '#00f2ff' } });
+
+        if (!data.List) return;
+        const seen = new Set();
+        let ncount = 0;
+
+        for (const [db, c] of Object.entries(data.List)) {
+            if (db === 'No results found' || ncount > 100) continue;
+            const dbId = `db_${db.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            elements.push({ data: { id: dbId, label: db, type: 'source', color: '#7000ff' } });
+            elements.push({ data: { source: rootId, target: dbId, weight: 2 } });
+
+            if (c.Data && Array.isArray(c.Data)) {
+                c.Data.slice(0, 8).forEach(row => {
+                    Object.entries(row).forEach(([k, v]) => {
+                        const vs = String(v).trim();
+                        if (vs.length < 3 || vs.length > 50) return;
+                        let type = 'data', color = '#94a3b8';
+                        if (vs.includes('@')) { type = 'email'; color = '#10b981'; }
+                        else if (/^[0-9.]+$/.test(vs)) { type = 'ip'; color = '#facc15'; }
+                        
+                        const eid = `en_${vs.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                        if (!seen.has(eid)) {
+                            elements.push({ data: { id: eid, label: vs, type: type, color: color } });
+                            seen.add(eid); ncount++;
+                        }
+                        elements.push({ data: { source: dbId, target: eid, weight: 1 } });
+                    });
+                });
+            }
+        }
+
+        cyInstance = cytoscape({
+            container: document.getElementById('cy'),
+            elements: elements,
+            style: [
+                { selector: 'node', style: { 'background-color': '#1e293b', 'label': 'data(label)', 'color': '#cbd5e1', 'font-size': '8px', 'font-family': 'JetBrains Mono', 'text-valign': 'bottom', 'text-margin-y': '4px', 'width': '20px', 'height': '20px', 'border-width': 1, 'border-color': 'data(color)', 'text-outline-width': 1, 'text-outline-color': '#000' } },
+                { selector: 'node[type="root"]', style: { 'width': '40px', 'height': '40px', 'font-size': '10px', 'font-weight': 'bold', 'border-width': 3 } },
+                { selector: 'edge', style: { 'width': 'data(weight)', 'line-color': 'rgba(255,255,255,0.05)', 'curve-style': 'haystack' } }
+            ],
+            layout: { name: 'cose', animate: true, padding: 30 }
+        });
+
+        cyInstance.on('tap', 'node', (e) => {
+            const d = e.target.data();
+            const p = document.getElementById('node-info');
+            p.style.display = 'block';
+            document.getElementById('node-type').textContent = d.type;
+            document.getElementById('node-label').textContent = d.label;
+            
+            let l = '';
+            if (d.type==='email') l = `<a href="https://google.com/search?q=${encodeURIComponent(d.label)}" target="_blank" class="py-2 bg-slate-800 text-center rounded text-[9px] font-bold">Deep Search</a>`;
+            else l = `<a href="https://google.com/search?q=${encodeURIComponent(d.label)}" target="_blank" class="py-2 bg-slate-800 text-center rounded text-[9px] font-bold">Trace Hub</a>`;
+            document.getElementById('node-links').innerHTML = l;
+        });
+    }
+
+    document.getElementById('close-node-info').addEventListener('click', () => { document.getElementById('node-info').style.display = 'none'; });
+
+    function updateStats(data) {
+        let rc = 0, sc = 0;
+        if (data.List) {
+            const f = Object.entries(data.List).filter(([n]) => !['error','No results found'].includes(n));
+            sc = f.length;
+            f.forEach(([_, c]) => { if(c.Data) rc += c.Data.length; });
+        }
+        statHits.textContent = rc;
+        statSources.textContent = sc;
+    }
+
+    function syntaxHighlight(j) {
+        if (typeof j !== 'string') j = JSON.stringify(j, undefined, 4);
+        return j.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Search Execution
+    searchBtn.addEventListener('click', async () => {
+        const req = document.getElementById('request').value.trim();
+        const lim = document.getElementById('limit').value;
+        const lan = document.getElementById('lang').value;
+        const tok = document.getElementById('token').value;
+
+        if (!req) { showToast('Operational Target Required', 'error'); return; }
+
+        searchBtn.disabled = true;
+        badge.className = 'status-badge status-active';
+        badge.textContent = 'RECON_IN_PROGRESS';
+        logs.innerHTML = '';
+        
+        await logLine('CONNECTING TO SAT-UPLINK REPOSITORY...', 'info', 100);
+        await logLine(`PROTO_SIGNAL: 92% | INTEL_LIMIT: ${lim}`, 'info', 150);
+        
+        const start = performance.now();
+        try {
+            const res = await fetch('/darkweb/api/search/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: tok, request: req, limit: parseInt(lim), lang: lan })
+            });
+            const data = await res.json();
+            currentIntel = data;
+            
+            statLatency.textContent = `${Math.round(performance.now() - start)}ms`;
+            
+            if (data.error) throw new Error(data.error);
+            
+            await logLine('DOSSIER SYNCHRONIZATION COMPLETE.', 'success', 200);
+            renderAll();
+            showToast('Intelligence dossier synced.');
+            badge.className = 'status-badge status-idle';
+            badge.textContent = 'SYNC_STANDBY';
+        } catch (e) {
+            await logLine(`PROTOCOL_ERROR: ${e.message}`, 'error', 0);
+            badge.className = 'status-badge status-idle';
+            badge.textContent = 'ERROR_ABORT';
+            showToast(e.message, 'error');
+        } finally {
+            searchBtn.disabled = false;
+        }
+    });
+
+    // Demo Recon
+    document.getElementById('demo-btn').addEventListener('click', async () => {
+        logs.innerHTML = '';
+        await logLine('EMULATING LIVE INTELLIGENCE FEED...', 'info', 100);
+        currentIntel = {
+            "List": {
+                "DarkMarket_DB_2024": { "Data": [{"Email": "admin@target.com", "Pass": "Hash:$2y$...", "Org": "Corporate"}, {"Email": "user@target.com", "Pass": "Secret123", "Org": "Internal"}] },
+                "PasteBin_Leaks_Q1": { "Data": [{"IP": "192.168.1.1", "Domain": "dev.target.com", "Action": "Scanned"}, {"IP": "10.0.0.5", "Domain": "db.target.com", "Action": "Exploited"}] }
+            }
+        };
+        statLatency.textContent = '12ms';
+        switchView();
+        renderAll();
+        showToast('Demo intelligence reconstructed.');
+    });
+
+    // Export Stubs
+    document.getElementById('dl-json').addEventListener('click', () => {
+        if (!currentIntel) return;
+        const b = new Blob([JSON.stringify(currentIntel, null, 4)], { type: 'application/json' });
+        const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `Intel_Dossier.json`; a.click();
+    });
+
+    document.getElementById('dl-pdf').addEventListener('click', () => {
+        if (!currentIntel) return;
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text("LEAKOSINT PRO - Intel Report", 14, 20);
+        doc.save('Intel_Dossier.pdf');
+        showToast('Report generated.');
+    });
+    
+    // Initialize
+    switchView();
+});
+</script>
+{% endblock %}

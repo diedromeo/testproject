@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Dark Web Monitoring - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Dark Web Monitoring</h1><p>Credential leaks, data breaches, brand mentions, ransomware tracking</p></div>
+    <div style="display:flex;gap:8px;">
+        <a href="{% url 'darkweb:live_search' %}" class="btn btn-primary btn-sm"><i class="fa-solid fa-satellite"></i> Live OSINT Search</a>
+        <a href="{% url 'darkweb:monitor_create' %}" class="btn btn-ghost btn-sm">+ Add Monitor</a>
+        <button class="btn btn-ghost btn-sm" onclick="runScan()">Run Scan</button>
+    </div>
+</div>
+
+<div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat-card"><div class="sc-label">Monitors</div><div class="sc-value">{{ total_monitors }}</div></div>
+    <div class="stat-card"><div class="sc-label">Total Alerts</div><div class="sc-value">{{ total_alerts }}</div></div>
+    <div class="stat-card"><div class="sc-label" style="color:var(--severity-critical);">Critical</div><div class="sc-value">{{ critical_alerts }}</div></div>
+    <div class="stat-card"><div class="sc-label" style="color:var(--info);">New</div><div class="sc-value">{{ new_alerts }}</div></div>
+</div>
+
+<div class="grid-2">
+    <!-- Active Monitors -->
+    <div class="card">
+        <div class="card-head"><h3>Active Monitors</h3></div>
+        <div class="card-body">
+            {% for m in monitors %}
+            <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+                <div style="display:flex;justify-content:space-between;">
+                    <div style="font-size:14px;font-weight:600;color:var(--text-primary);">{{ m.organization_name }}</div>
+                    <span class="badge badge-{{ m.status }}">{{ m.status }}</span>
+                </div>
+                <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;">
+                    Domains: {{ m.domains|length }} &middot;
+                    Keywords: {{ m.keywords|length }} &middot;
+                    Last scan: {% if m.last_scan %}{{ m.last_scan|timesince }} ago{% else %}Never{% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state" style="padding:20px;">
+                <p>No monitors configured. Add one or run a demo scan.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Findings -->
+    <div class="card">
+        <div class="card-head">
+            <h3>Recent Findings</h3>
+            <a href="{% url 'darkweb:alert_list' %}" class="btn btn-ghost btn-xs">View all &rarr;</a>
+        </div>
+        <div class="card-body no-pad">
+            {% for a in recent_alerts %}
+            <a href="{% url 'darkweb:alert_detail' a.pk %}" class="dw-alert-row" style="text-decoration:none;color:inherit;">
+                <div class="dw-sev" style="background:{{ a.severity_color }};"></div>
+                <div class="dw-content">
+                    <div class="dw-title">{{ a.title|truncatewords:12 }}</div>
+                    <div class="dw-meta">
+                        <span class="badge badge-{{ a.severity }}">{{ a.severity|upper }}</span>
+                        <span>{{ a.get_alert_type_display }}</span>
+                        <span>{{ a.discovered_at|timesince }} ago</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="empty-state" style="padding:20px;">
+                <p>No findings yet. Run a scan to detect threats.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function runScan() {
+    showToast('Running dark web scan...', 'nfo');
+    fetch('{% url "darkweb:simulate_scan" %}', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.status === 'success') {
+            showToast(d.message, 'ok');
+            setTimeout(() => location.reload(), 1200);
+        } else showToast('Error', 'err');
+    })
+    .catch(() => showToast('Network error', 'err'));
+}
+</script>
+{% endblock %}

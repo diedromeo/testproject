@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - ThreatShield</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-box">
+            <div class="auth-logo">
+                <div class="logo-mark">TS</div>
+                <h1>Administrator Login</h1>
+                <p>ThreatShield Platform Management</p>
+            </div>
+
+            {% if error %}
+            <div class="auth-error">{{ error }}</div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="text" name="username" placeholder="Admin username" required autofocus>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit" class="btn btn-primary">Sign in as Administrator</button>
+            </form>
+
+            <div class="auth-footer">
+                <a href="{% url 'core:login' %}">&larr; Back to portal selection</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

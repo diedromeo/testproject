@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% block title %}Frameworks - ThreatShield{% endblock %}
+
+{% block page_title_header %}Frameworks{% endblock %}
+
+{% block extra_css %}
+<style>
+    .vanta-page { background: white; padding: 0 32px 32px 32px; min-height: calc(100vh - 64px); }
+    .page-header { display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 16px; border-bottom: 2px solid #F3F4F6; margin-bottom: 24px; }
+    
+    .tabs-wrap { display: flex; gap: 24px; font-size: 14px; font-weight: 600; color: #6B7280; margin-bottom: -18px; }
+    .tab-item { padding-bottom: 14px; cursor: pointer; position: relative; display: flex; align-items: center; gap: 6px; }
+    .tab-item.active { border-bottom: 2px solid #6366F1; color: #111827; }
+    .tab-count { font-size: 12px; font-weight: 500; opacity: 0.7; }
+
+    .header-actions { display: flex; gap: 12px; }
+    .btn-white { background: white; border: 1px solid #D1D5DB; border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; }
+    .btn-white:hover { background: #F9FAFB; border-color: #9CA3AF; }
+
+    /* Filters Row */
+    .filters-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .filters-left { display: flex; align-items: center; gap: 16px; }
+    
+    .search-input-wrap { position: relative; width: 220px; }
+    .search-input-wrap .icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9CA3AF; font-size: 14px; }
+    .search-input { width: 100%; border: 1px solid #D1D5DB; border-radius: 6px; padding: 6px 12px 6px 30px; font-size: 13px; color: #111827; }
+    .search-input:focus { outline: none; border-color: #6366F1; box-shadow: 0 0 0 1px #6366F1; }
+
+    .filter-dropdown { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: #4B5563; cursor: pointer; }
+    .filter-dropdown:hover { color: #111827; }
+
+    /* Table */
+    .vanta-table { width: 100%; border-collapse: collapse; text-align: left; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; background: white; }
+    .vanta-table th { font-size: 12px; font-weight: 600; color: #6B7280; border-bottom: 2px solid #E5E7EB; padding: 12px 16px; text-transform: none; }
+    .vanta-table td { font-size: 13px; color: #111827; border-bottom: 1px solid #E5E7EB; padding: 14px 16px; vertical-align: middle; }
+    .vanta-table tr:hover td { background: #F9FAFB; cursor: pointer; }
+    .vanta-table tr:last-child td { border-bottom: none; }
+    
+    .fw-name-td { display: flex; align-items: center; gap: 12px; font-weight: 600; color: #111827; }
+    .fw-icon { width: 28px; height: 28px; border-radius: 50%; background: #EEF2FF; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: #4F46E5; }
+    .fw-subtext { font-size: 11px; font-weight: 400; color: #6B7280; display: block; margin-top: 2px; }
+
+    /* Circular Progress */
+    .circle-prog-wrap { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+    .circle-prog { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #E5E7EB; border-top-color: #10B981; border-right-color: #10B981; }
+
+    /* Status Badge */
+    .status-active { display: inline-flex; align-items: center; gap: 4px; color: #059669; font-weight: 600; font-size: 12px; }
+    .status-active::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #10B981; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vanta-page">
+    
+    <div class="page-header">
+        <div class="tabs-wrap">
+            <div class="tab-item active">Active <span class="tab-count">{{ frameworks.count }}</span></div>
+            <div class="tab-item">Available <span class="tab-count">44</span></div>
+            <div class="tab-item">Update notes <span class="tab-count">61</span></div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-white">+ Add framework</button>
+            <a href="{% url 'compliance:audit_list' %}" class="btn-white" style="text-decoration:none;">View audits</a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-row">
+        <div class="filters-left">
+            <div class="search-input-wrap">
+                <span class="icon">&#x1F50D;</span>
+                <input type="text" class="search-input" placeholder="Search frameworks">
+            </div>
+            <div class="filter-dropdown">Status &#x25BC;</div>
+            <div class="filter-dropdown">Domain &#x25BC;</div>
+            <div class="filter-dropdown">Source &#x25BC;</div>
+        </div>
+        <div>
+            <button class="btn-white" style="padding: 4px 8px;">&#x2630;</button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <table class="vanta-table">
+        <thead>
+            <tr>
+                <th style="width: 20%;">Framework name</th>
+                <th>Evidence compl...</th>
+                <th>Control completi...</th>
+                <th>Audit ends</th>
+                <th>Status</th>
+                <th>Assets in scope</th>
+                <th>Systems in scope</th>
+                <th>Domain</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for fw in frameworks %}
+            <tr onclick="window.location.href='{% url 'compliance:framework_detail' fw.pk %}'">
+                <td>
+                    <div class="fw-name-td">
+                        <div class="fw-icon">{{ fw.name|first }}</div>
+                        <div>
+                            {{ fw.name }}
+                            <span class="fw-subtext">Built by ThreatShield</span>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="circle-prog-wrap">
+                        <div class="circle-prog" style="transform: rotate(45deg);"></div>
+                        {{ fw.compliance_percentage }}%
+                    </div>
+                </td>
+                <td>
+                    <div class="circle-prog-wrap">
+                        <div class="circle-prog" style="transform: rotate(180deg); border-top-color: #3B82F6; border-right-color: transparent;"></div>
+                        {{ fw.controls.count }}%
+                    </div>
+                </td>
+                <td style="color:#9CA3AF;">&mdash;</td>
+                <td>
+                    <div class="status-active">Active</div>
+                </td>
+                <td>6.5K (100%)</td>
+                <td>14 (100%)</td>
+                <td style="color:#6B7280;">Security Data protection</td>
+                <td style="color:#9CA3AF; text-align:right;">&#x2022;&#x2022;&#x2022;</td>
+            </tr>
+            {% empty %}
+            <!-- Mock data to match screenshot perfectly if no frameworks exist in DB for testing -->
+            <tr onclick="window.location.href=''">
+                <td>
+                    <div class="fw-name-td">
+                        <div class="fw-icon" style="background:#111827; color:white;">N</div>
+                        <div>
+                            NIST AI RMF
+                            <span class="fw-subtext">Built by CISO AI</span>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="circle-prog-wrap"><div class="circle-prog"></div> 81%</div>
+                </td>
+                <td>
+                    <div class="circle-prog-wrap"><div class="circle-prog"></div> 69%</div>
+                </td>
+                <td style="color:#9CA3AF;">&mdash;</td>
+                <td><div class="status-active">Active</div></td>
+                <td>4.4K (67%)</td>
+                <td>13 (93%)</td>
+                <td style="color:#6B7280;">AI governance</td>
+                <td style="color:#9CA3AF; text-align:right;">&#x2022;&#x2022;&#x2022;</td>
+            </tr>
+            <tr onclick="window.location.href=''">
+                <td>
+                    <div class="fw-name-td">
+                        <div class="fw-icon" style="background:#4C1D95; color:white;">C</div>
+                        <div>
+                            Custom_Framework
+                            <span class="fw-subtext">Custom</span>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="circle-prog-wrap"><div class="circle-prog"></div> 84%</div>
+                </td>
+                <td>
+                    <div class="circle-prog-wrap"><div class="circle-prog"></div> 60%</div>
+                </td>
+                <td style="color:#9CA3AF;">&mdash;</td>
+                <td><div class="status-active">Active</div></td>
+                <td>6.5K (100%)</td>
+                <td>14 (100%)</td>
+                <td style="color:#9CA3AF;">&mdash;</td>
+                <td style="color:#9CA3AF; text-align:right;">&#x2022;&#x2022;&#x2022;</td>
+            </tr>
+            <tr onclick="window.location.href=''">
+                <td>
+                    <div class="fw-name-td">
+                        <div class="fw-icon" style="background:#1E3A8A; color:white;">S</div>
+                        <div>
+                            SOC 2
+                            <span class="fw-subtext">Built by CISO AI</span>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="circle-prog-wrap"><div class="circle-prog" style="border-top-color:#10B981;"></div> 86%</div>
+                </td>
+                <td>
+                    <div class="circle-prog-wrap"><div class="circle-prog"></div> 54%</div>
+                </td>
+                <td style="color:#9CA3AF;">&mdash;</td>
+                <td><div class="status-active">Active</div></td>
+                <td>6.5K (100%)</td>
+                <td>14 (100%)</td>
+                <td style="color:#6B7280;">Security Data protection</td>
+                <td style="color:#9CA3AF; text-align:right;">&#x2022;&#x2022;&#x2022;</td>
+            </tr>
+            <tr onclick="window.location.href=''">
+                <td>
+                    <div class="fw-name-td">
+                        <div class="fw-icon" style="background:#0F172A; color:white;">G</div>
+                        <div>
+                            GDPR
+                            <span class="fw-subtext">Built by CISO AI</span>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="circle-prog-wrap"><div class="circle-prog"></div> 84%</div>
+                </td>
+                <td>
+                    <div class="circle-prog-wrap"><div class="circle-prog"></div> 53%</div>
+                </td>
+                <td style="color:#9CA3AF;">&mdash;</td>
+                <td><div class="status-active">Active</div></td>
+                <td>6.5K (100%)</td>
+                <td>14 (100%)</td>
+                <td style="color:#6B7280;">Security Data protection</td>
+                <td style="color:#9CA3AF; text-align:right;">&#x2022;&#x2022;&#x2022;</td>
+            </tr>
+            <tr onclick="window.location.href=''">
+                <td>
+                    <div class="fw-name-td">
+                        <div class="fw-icon" style="background:#5B21B6; color:white;">P</div>
+                        <div>
+                            PCI DSS
+                            <span class="fw-subtext">Built by CISO AI</span>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="circle-prog-wrap"><div class="circle-prog"></div> 86%</div>
+                </td>
+                <td>
+                    <div class="circle-prog-wrap"><div class="circle-prog" style="border-top-color:#F59E0B; border-right-color:#F59E0B;"></div> 48%</div>
+                </td>
+                <td style="color:#9CA3AF;">&mdash;</td>
+                <td><div class="status-active">Active</div></td>
+                <td>4.9K (75%)</td>
+                <td>14 (100%)</td>
+                <td style="color:#6B7280;">Security</td>
+                <td style="color:#9CA3AF; text-align:right;">&#x2022;&#x2022;&#x2022;</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

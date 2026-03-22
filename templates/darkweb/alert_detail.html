@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Dark Web Alert - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Dark Web Alert Detail</h1></div></div>
+
+<div class="detail-header">
+    <div>
+        <div class="detail-title">{{ alert.title }}</div>
+        <div class="detail-meta">
+            <span class="detail-meta-item"><span class="badge badge-{{ alert.severity }}">{{ alert.severity|upper }}</span></span>
+            <span class="detail-meta-item"><span class="badge badge-{{ alert.status }}">{{ alert.get_status_display }}</span></span>
+            <span class="detail-meta-item">Type: {{ alert.get_alert_type_display }}</span>
+            <span class="detail-meta-item">Source: {{ alert.source }}</span>
+            <span class="detail-meta-item">{{ alert.discovered_at|timesince }} ago</span>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card"><div class="card-head"><h3>Description</h3></div><div class="card-body"><div class="detail-text">{{ alert.description }}</div></div></div>
+    <div class="card"><div class="card-head"><h3>Remediation</h3></div><div class="card-body"><div class="detail-text" style="color:var(--success);">{{ alert.remediation }}</div></div></div>
+</div>
+
+{% if alert.affected_assets %}
+<div class="card"><div class="card-head"><h3>Affected Assets</h3></div><div class="card-body"><div class="detail-text">{{ alert.affected_assets }}</div></div></div>
+{% endif %}
+
+<div style="margin-top:12px;display:flex;gap:8px;">
+    <a href="{% url 'darkweb:alert_list' %}" class="btn btn-ghost btn-sm">&larr; Back</a>
+    <a href="{% url 'darkweb:dashboard' %}" class="btn btn-ghost btn-sm">Dashboard</a>
+</div>
+{% endblock %}

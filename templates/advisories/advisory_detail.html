@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Advisory - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Advisory Detail</h1></div></div>
+
+<div class="detail-header">
+    <div>
+        <div class="detail-title">{{ advisory.title }}</div>
+        <div class="detail-meta">
+            <span class="detail-meta-item"><span class="badge badge-{{ advisory.severity }}">{{ advisory.severity|upper }}</span></span>
+            <span class="detail-meta-item">Source: {{ advisory.source }}</span>
+            {% if advisory.linked_cve %}<span class="detail-meta-item">CVE: <a href="{% url 'cve_engine:cve_detail' advisory.linked_cve.cve_id %}">{{ advisory.linked_cve.cve_id }}</a></span>{% endif %}
+            <span class="detail-meta-item">Published: {{ advisory.created_at|timesince }} ago</span>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card"><div class="card-head"><h3>Description</h3></div><div class="card-body"><div class="detail-text">{{ advisory.description }}</div></div></div>
+    <div class="card"><div class="card-head"><h3>Recommended Actions</h3></div><div class="card-body"><div class="detail-text" style="color:var(--success);">{{ advisory.recommended_action }}</div></div></div>
+</div>
+
+{% if advisory.affected_systems %}
+<div class="card"><div class="card-head"><h3>Affected Systems</h3></div><div class="card-body"><div class="detail-text">{{ advisory.affected_systems }}</div></div></div>
+{% endif %}
+
+<a href="{% url 'advisories:advisory_list' %}" class="btn btn-ghost btn-sm" style="margin-top:12px;">&larr; Back</a>
+{% endblock %}

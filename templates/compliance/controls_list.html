@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Controls - ThreatShield{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div><h1>Compliance Controls</h1><p>Map policies and evidence to regulatory controls</p></div>
+    <a href="{% url 'documents:document_upload' %}" class="btn btn-primary btn-sm">+ Upload Evidence</a>
+</div>
+
+<div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+    <div class="stat-card"><div class="sc-label">Total Controls</div><div class="sc-value">{{ total }}</div></div>
+    <div class="stat-card"><div class="sc-label" style="color:var(--success);">Compliant</div><div class="sc-value">{{ compliant }}</div></div>
+    <div class="stat-card"><div class="sc-label">Coverage</div><div class="sc-value">{{ comp_pct }}%</div></div>
+</div>
+
+<div class="card">
+    <div class="card-body no-pad">
+        <div class="tbl-wrap">
+            <table class="tbl">
+                <thead>
+                    <tr><th>Control ID</th><th>Description</th><th>Framework</th><th>Compliance Body</th><th>Status</th><th>Documents</th></tr>
+                </thead>
+                <tbody>
+                    {% for c in controls %}
+                    <tr>
+                        <td style="font-weight:600;"><span class="mono">{{ c.control_id }}</span></td>
+                        <td style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ c.title }}</td>
+                        <td><span class="badge" style="background:var(--bg-secondary);color:var(--text-secondary);">{{ c.framework.name }}</span></td>
+                        <td>{{ c.compliance_body|default:"N/A" }}</td>
+                        <td><span class="badge badge-{{ c.status }}">{{ c.get_status_display }}</span></td>
+                        <td>
+                            {% if c.documents.count > 0 %}
+                                <a href="{% url 'documents:document_list' %}">{{ c.documents.count }} files</a>
+                            {% else %}
+                                <span style="color:var(--text-tertiary);">None</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6"><div class="empty-state"><p>No controls found.</p></div></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

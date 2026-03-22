@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Onboarding - ThreatShield{% endblock %}
+{% block content %}
+<div class="auth-wrapper" style="min-height: calc(100vh - 100px);">
+    <div class="auth-box" style="max-width: 500px;">
+        <div class="auth-logo">
+            <div class="logo-mark">TS</div>
+            <h1>Welcome to ThreatShield</h1>
+            <p>Tell us about your organization to setup compliance frameworks.</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label">Organization Name</label>
+                <input type="text" name="organization_name" class="form-input" value="{{ request.user.profile.organization }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Industry</label>
+                <select name="industry" class="form-select" required>
+                    <option value="">Select your industry...</option>
+                    <option value="IT">IT / SaaS</option>
+                    <option value="Banking">Banking / Fintech</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="SCADA">SCADA / Industrial Automation</option>
+                    <option value="Manufacturing">Manufacturing / Production</option>
+                    <option value="Insurance">Insurance</option>
+                    <option value="Government">Government</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Business Description</label>
+                <textarea name="business_desc" class="form-input" rows="3" placeholder="Describe what your business does... (Used for AI compliance analysis)" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Organization Size</label>
+                <select name="org_size" class="form-select" required>
+                    <option value="">Select size...</option>
+                    <option value="1-50">1-50 employees</option>
+                    <option value="51-200">51-200 employees</option>
+                    <option value="201-1000">201-1000 employees</option>
+                    <option value="1000+">1000+ employees</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Country</label>
+                <input type="text" name="country" class="form-input" placeholder="e.g. India" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:20px; padding: 12px; font-size:15px;">Complete Setup</button>
+        </form>
+    </div>
+</div>
+
+<style>
+/* Adjust body margin for full auth screen alignment */
+body .page { padding: 0 !important; }
+</style>
+{% endblock %}
