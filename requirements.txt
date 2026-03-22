@@ -1,4 +1,4 @@
-Django==6.0.2
+Django==5.2.11
 djangorestframework==3.16.1
 celery==5.6.2
 redis==7.3.0
@@ -8,11 +8,10 @@ gunicorn==21.2.0
 whitenoise==6.6.0
 psycopg2-binary==2.9.9
 dj-database-url==2.1.0
-ollama==0.6.1
 beautifulsoup4==4.14.3
 PyYAML==6.0.3
 Twisted==25.5.0
-channels==4.3.2
-channels_redis==4.3.0
+channels==4.0.0
+channels_redis==4.1.0
 scapy==2.7.0
 Flask==3.1.2
